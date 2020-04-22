@@ -1,0 +1,11 @@
+{
+  "name": "geo-splitter",
+  "version": "1.0.0",
+  "description": "A package to split geoJSON data into tiles",
+  "main": "split.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
