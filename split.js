@@ -63,7 +63,7 @@ function isPointInside(testPoint, feature) {
   }).includes(true);
 }
 
-function generateIntersectionPoints(data, xStart, xEnd, yStart, yEnd, gridSize) {
+function generateCornerPoints(data, xStart, xEnd, yStart, yEnd, gridSize) {
   const pointsToTest = []
   genArray(xStart, xEnd, gridSize).map(x => {
     genArray(yStart, yEnd, gridSize).map(y => {
@@ -163,11 +163,12 @@ function split(data, xStart, xEnd, yStart, yEnd, gridSize) {
     ...data,
     features: splitPointsData,
   }
-  const intersectionPoints = generateIntersectionPoints(newData, xStart, xEnd, yStart, yEnd, gridSize);
+  const intersectionPoints = generateCornerPoints(newData, xStart, xEnd, yStart, yEnd, gridSize);
   const splittedData = buildAreaSplit(newData, intersectionPoints, xStart, xEnd, yStart, yEnd, gridSize);
   return splittedData;
 }
 
 module.exports = {
-  split
+  split,
+  addSplitPoints,
 }
