@@ -14,6 +14,8 @@ var genArray = require('./utils').genArray
 var getSplitPoints = require('./utils').getSplitPoints
 var pushArray = require('./utils').pushArray
 var mapFrom = require('./utils').mapFrom
+var includeArr = require('./utils').includeArr
+var flattenDoubleArray = require('./utils').flattenDoubleArray
 
 //Add all missing crossborder points for a polygon
 function addSplitPointFeature(coordinates, gridSize) {
@@ -72,7 +74,11 @@ function generateCornerPoints(data, xStart, xEnd, yStart, yEnd, gridSize) {
   })
 
   return data.features.map(feature => {
-    const result = pointsToTest.filter(point => isPointInside(point, feature))
+    const featurePoints = flattenDoubleArray(feature.geometry.coordinates);
+    const result = pointsToTest.filter(point => (
+      isPointInside(point, feature) &&
+      !includeArr(featurePoints, point)
+    ))
     return result
   }
   )
@@ -133,8 +139,8 @@ function generateCornerPointsSubset(minX, maxX, minY, maxY, cornerPoints) {
 
 function buildAreaSplit(newData, cornerPoints, xStart, xEnd, yStart, yEnd, gridSize) {
   const areas = [];
-  genArray(xStart, xEnd-gridSize, gridSize).map(x => {
-    genArray(yStart, yEnd-gridSize, gridSize).map(y => {
+  genArray(xStart, xEnd - gridSize, gridSize).map(x => {
+    genArray(yStart, yEnd - gridSize, gridSize).map(y => {
       const newFeatures = newData.features.map((feature, idx) => {
         const cornerPointSubset = generateCornerPointsSubset(x, x + gridSize, y, y + gridSize, cornerPoints[idx]);
         const pointSubset = generatePointSubset(x, x + gridSize, y, y + gridSize, feature.geometry.coordinates);
@@ -170,5 +176,6 @@ function split(data, xStart, xEnd, yStart, yEnd, gridSize) {
 
 module.exports = {
   split,
-  addSplitPoints,
+  addSplitPointsAll,
+  generateCornerPoints,
 }
