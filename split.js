@@ -178,4 +178,5 @@ module.exports = {
   split,
   addSplitPointsAll,
   generateCornerPoints,
+  generatePointSubset,
 }

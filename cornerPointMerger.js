@@ -9,6 +9,7 @@ var crossPointNb = require('./pointUtils').crossPointNb
 var getPolygonOuterPoint = require('./pointUtils').getPolygonOuterPoint
 var splitSquareSide2 = require('./pointUtils').splitSquareSide2
 var hasFollowingPoint = require('./pointUtils').hasFollowingPoint
+var isOnSquareSide = require('./pointUtils').isOnSquareSide
 
 var includeArr = require('./utils').includeArr
 var pushArray = require('./utils').pushArray
@@ -294,6 +295,22 @@ function cornerPointMerger(minX, maxX, minY, maxY, pointSubset, cornerPointSubse
   if (pointSubset.length === 1 && orderedCornerPoints.length === 0) {
     newSubset.push(pointSubset[0]);
     return newSubset;
+  }
+
+  //Handles islands: start point or end point not on a side
+  if (pointSubset.length > 0 && orderedCornerPoints.length === 0){
+    const toRemove = []
+    pointSubset.map((path,idx) => {
+      if(
+        !isOnSquareSide(minX, maxX, minY, maxY, path[0]) ||
+        !isOnSquareSide(minX, maxX, minY, maxY, path[path.length - 1])
+      ){
+        newSubset.push(path)
+        toRemove.push(idx)
+      }
+    })
+
+    toRemove.reverse().map(idx => {pointSubset.splice(idx,1)})
   }
 
   //Handles multiple path exclusive polygons
