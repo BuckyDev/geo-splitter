@@ -1,9 +1,7 @@
 var cornerPointMerger = require('./cornerPointMerger').cornerPointMerger
 
-var getUpPointsNb = require('./pointUtils').getUpPointsNb
-var getDownPointsNb = require('./pointUtils').getDownPointsNb
-var getLeftPointsNb = require('./pointUtils').getLeftPointsNb
-var getRightPointsNb = require('./pointUtils').getRightPointsNb
+var crossPointNb = require('./pointUtils').crossPointNb
+var getPolygonOuterPoint = require('./pointUtils').getPolygonOuterPoint
 var isEntryPoint = require('./pointUtils').isEntryPoint
 var isBouncePoint = require('./pointUtils').isBouncePoint
 var isInSquare = require('./pointUtils').isInSquare
@@ -57,11 +55,16 @@ function addSplitPointsAll(data, gridSize) {
 function isPointInside(testPoint, feature) {
   const featurePoints = feature.geometry.coordinates;
   return featurePoints.map(polygonPoints => {
-    const isInUp = getUpPointsNb(testPoint, polygonPoints) % 2 === 1;
-    const isInDown = getDownPointsNb(testPoint, polygonPoints) % 2 === 1;
-    const isInLeft = getLeftPointsNb(testPoint, polygonPoints) % 2 === 1;
-    const isInRight = getRightPointsNb(testPoint, polygonPoints) % 2 === 1;
-    return isInUp && isInDown && isInLeft && isInRight;
+    const topRef = getPolygonOuterPoint(testPoint,polygonPoints,'top');
+    const bottomRef = getPolygonOuterPoint(testPoint,polygonPoints,'bottom');
+    const leftRef = getPolygonOuterPoint(testPoint,polygonPoints,'left');
+    const rightRef = getPolygonOuterPoint(testPoint,polygonPoints,'right');
+    
+    const isInTop = crossPointNb(testPoint, topRef, polygonPoints) % 2 === 1;
+    const isInBottom = crossPointNb(testPoint, bottomRef, polygonPoints) % 2 === 1;
+    const isInLeft = crossPointNb(testPoint, leftRef, polygonPoints) % 2 === 1;
+    const isInRight = crossPointNb(testPoint, rightRef, polygonPoints) % 2 === 1;
+    return isInTop && isInBottom && isInLeft && isInRight;
   }).includes(true);
 }
 

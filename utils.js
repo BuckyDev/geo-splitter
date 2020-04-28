@@ -28,15 +28,6 @@ function flattenDoubleArray(arr) {
   return result;
 }
 
-function substractArr(resultArr, removedArr) {
-  removedArr.map(val => {
-    const idx = resultArr.indexOf(val)
-    if (idx > -1) {
-      resultArr.splice(idx, 1);
-    }
-  })
-}
-
 function findPointIndex(pointArr, point) {
   let index = -1
   pointArr.map((el, idx) => {
@@ -165,7 +156,6 @@ module.exports = {
   max,
   min,
   flattenDoubleArray,
-  substractArr,
   findPointIndex,
   substractPoints,
   mapFrom,
