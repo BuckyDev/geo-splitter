@@ -25,6 +25,13 @@ function isInSquare(minX, maxX, minY, maxY, point) {
     point[1] <= maxY
 }
 
+function isStrictlyInSquare(minX, maxX, minY, maxY, point) {
+  return point[0] > minX &&
+    point[0] < maxX &&
+    point[1] > minY &&
+    point[1] < maxY
+}
+
 //Gives the side of the square on which the split point is
 //Do not handle corners !!!
 function splitSquareSide(minX, maxX, minY, maxY, splitPoint) {
@@ -48,6 +55,10 @@ function splitSquareSide2(minX, maxX, minY, maxY, splitPoint) {
   if (splitPoint[0] === maxX && splitPoint[1] > minY) { return 'right' }
   if (splitPoint[1] === minY && splitPoint[0] > minX) { return 'bottom' }
   if (splitPoint[1] === maxY && splitPoint[0] < maxX) { return 'top' }
+}
+
+function areOnSameSide(pointA,pointB){
+  return pointA[0] === pointB[0] || pointA[1] === pointB[1]
 }
 
 //Gives if the point is at the corner of the square
@@ -228,8 +239,10 @@ function hasFollowingPoint(minX, maxX, minY, maxY, origin, pointCloud) {
 }
 
 module.exports = {
+  areOnSameSide,
   isOnSquareSide,
   isInSquare,
+  isStrictlyInSquare,
   splitSquareSide,
   splitSquareSide2,
   isInCorner,

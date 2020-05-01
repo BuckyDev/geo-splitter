@@ -5,8 +5,11 @@ var getPolygonOuterPoint = require('./pointUtils').getPolygonOuterPoint
 var isEntryPoint = require('./pointUtils').isEntryPoint
 var isBouncePoint = require('./pointUtils').isBouncePoint
 var isInSquare = require('./pointUtils').isInSquare
+var isStrictlyInSquare = require('./pointUtils').isStrictlyInSquare
+var isOnSquareSide = require('./pointUtils').isOnSquareSide
 var isInnerCorner = require('./pointUtils').isInnerCorner
 var isInCorner = require('./pointUtils').isInCorner
+var areOnSameSide = require('./pointUtils').areOnSameSide
 
 var genArray = require('./utils').genArray
 var getSplitPoints = require('./utils').getSplitPoints
@@ -59,7 +62,7 @@ function isPointInside(testPoint, feature) {
     const bottomRef = getPolygonOuterPoint(testPoint,polygonPoints,'bottom');
     const leftRef = getPolygonOuterPoint(testPoint,polygonPoints,'left');
     const rightRef = getPolygonOuterPoint(testPoint,polygonPoints,'right');
-    
+
     const isInTop = crossPointNb(testPoint, topRef, polygonPoints) % 2 === 1;
     const isInBottom = crossPointNb(testPoint, bottomRef, polygonPoints) % 2 === 1;
     const isInLeft = crossPointNb(testPoint, leftRef, polygonPoints) % 2 === 1;
@@ -133,7 +136,38 @@ function generatePointSubset(minX, maxX, minY, maxY, coordinates) {
       }
     })
   })
-  return pointSubset;
+
+  //Filtering out non relevant points (don't have neighbors strictly in on in other square sides)
+  const filteredPointSubset = [];
+  pointSubset.map(path => {
+    const newPath = path.filter((point,idx) => {
+      const prevPoint = idx === 0 ? null : path[idx - 1]
+      const nextPoint = idx === path.length - 1 ? null : path[idx + 1] 
+
+      const isPrevPointValid = prevPoint ?
+        (isStrictlyInSquare(minX, maxX, minY, maxY, prevPoint) ||
+          !areOnSameSide(point,prevPoint)
+        ) : false
+      const isNextPointValid = nextPoint ?
+        (isStrictlyInSquare(minX, maxX, minY, maxY, nextPoint) ||
+          !areOnSameSide(point,nextPoint)
+        ) : false
+      return (
+        isStrictlyInSquare(minX, maxX, minY, maxY, point) || (
+          isOnSquareSide(minX, maxX, minY, maxY, point) && (
+            isPrevPointValid || 
+            isNextPointValid ||
+            isInCorner(minX, maxX, minY, maxY, point)
+          )
+        )
+      )
+    })
+    if(newPath.length > 0){
+      filteredPointSubset.push(newPath)
+    }
+  })
+
+  return filteredPointSubset;
 }
 
 function generateCornerPointsSubset(minX, maxX, minY, maxY, cornerPoints) {
