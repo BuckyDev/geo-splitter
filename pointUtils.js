@@ -268,11 +268,11 @@ function isAdjacentEndExt(minX, maxX, minY, maxY, followedPoint, point, pointClo
   }
   if(arePointsEqual([minX,maxY],point)){
     if(direction==='top'){direction='right'}
-    if(direction==='left'){direction='bottom'}
+    if(direction==='right'){direction='bottom'}
   }
   if(arePointsEqual([maxX,maxY],point)){
     if(direction==='top'){direction='left'}
-    if(direction==='right'){direction='bottom'}
+    if(direction==='left'){direction='bottom'}
   }
   if(arePointsEqual([maxX,minY],point)){
     if(direction==='bottom'){direction='left'}

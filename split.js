@@ -176,7 +176,7 @@ function buildExcludedAdjacentPathCollection(minX, maxX, minY, maxY, coordinates
 
       if (
         (isInjectedEntryPoint(minX, maxX, minY, maxY, startPoint, followingStartPoint) !==
-          isAdjacentEndExt(minX, maxX, minY, maxY, followedStartPoint, startPoint, polygonPoints)) &&
+          isAdjacentEndExt(minX, maxX, minY, maxY, followedStartPoint, startPoint, polygonPoints)) ||
         (isInjectedEntryPoint(minX, maxX, minY, maxY, endPoint, followingEndPoint) !==
           isAdjacentEndExt(minX, maxX, minY, maxY, followedEndPoint, endPoint, polygonPoints))
       ) {
