@@ -4,7 +4,6 @@ var crossPointNb = require('./pointUtils').crossPointNb
 var getPolygonOuterPoint = require('./pointUtils').getPolygonOuterPoint
 var isSimpleEntryPoint = require('./pointUtils').isSimpleEntryPoint
 var isInSquare = require('./pointUtils').isInSquare
-var isStrictlyInSquare = require('./pointUtils').isStrictlyInSquare
 var isOnSquareSide = require('./pointUtils').isOnSquareSide
 var isInnerCorner = require('./pointUtils').isInnerCorner
 var isBouncePoint = require('./pointUtils').isBouncePoint
@@ -12,6 +11,7 @@ var isInCorner = require('./pointUtils').isInCorner
 var areOnSameSide = require('./pointUtils').areOnSameSide
 var isInjectedEntryPoint = require('./pointUtils').isInjectedEntryPoint
 var isAdjacentEndExt = require('./pointUtils').isAdjacentEndExt
+var isOnSingleSide = require('./pointUtils').isOnSingleSide
 
 var genArray = require('./utils').genArray
 var getSplitPoints = require('./utils').getSplitPoints
@@ -195,6 +195,22 @@ function buildExcludedAdjacentPathCollection(minX, maxX, minY, maxY, coordinates
           path.splice(path.length - 1, 1)
         }
         if (isInjectedEntryPoint(minX, maxX, minY, maxY, startPoint, followingStartPoint)) {
+          path.splice(0, 1)
+        }
+        if (path.length > 0) {
+          filteredCollection.push(path)
+        }
+      } else if(isOnSingleSide(path)){
+        if (
+          isInCorner(minX, maxX, minY, maxY, endPoint) ||
+          isInjectedEntryPoint(minX, maxX, minY, maxY, endPoint, followingEndPoint)
+        ) {
+          path.splice(path.length - 1, 1)
+        }
+        if (
+          isInCorner(minX, maxX, minY, maxY, startPoint) ||
+          isInjectedEntryPoint(minX, maxX, minY, maxY, startPoint, followingStartPoint)
+        ) {
           path.splice(0, 1)
         }
         if (path.length > 0) {

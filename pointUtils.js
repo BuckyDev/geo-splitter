@@ -12,6 +12,10 @@ function isOnSquareSide(minX, maxX, minY, maxY, point) {
     validCoordY.includes(point[1]) && point[0] >= minX && point[0] <= maxX)
 };
 
+function isOnSingleSide(path) {
+  return path.every(point => point[0] === path[0][0]) || path.every(point => point[1] === path[0][1])
+};
+
 function isAdjacentAngle(point, prevPoint, nextPoint, type) {
   const coord = type === 'vertical' ? 0 : 1;
 
@@ -318,4 +322,5 @@ module.exports = {
   hasFollowingPoint,
   isInjectedEntryPoint,
   isAdjacentEndExt,
+  isOnSingleSide,
 }
