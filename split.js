@@ -2,20 +2,23 @@ var cornerPointMerger = require('./cornerPointMerger').cornerPointMerger
 
 var crossPointNb = require('./pointUtils').crossPointNb
 var getPolygonOuterPoint = require('./pointUtils').getPolygonOuterPoint
-var isEntryPoint = require('./pointUtils').isEntryPoint
-var isBouncePoint = require('./pointUtils').isBouncePoint
+var isSimpleEntryPoint = require('./pointUtils').isSimpleEntryPoint
 var isInSquare = require('./pointUtils').isInSquare
 var isStrictlyInSquare = require('./pointUtils').isStrictlyInSquare
 var isOnSquareSide = require('./pointUtils').isOnSquareSide
 var isInnerCorner = require('./pointUtils').isInnerCorner
+var isBouncePoint = require('./pointUtils').isBouncePoint
 var isInCorner = require('./pointUtils').isInCorner
 var areOnSameSide = require('./pointUtils').areOnSameSide
+var isInjectedEntryPoint = require('./pointUtils').isInjectedEntryPoint
+var isAdjacentEndExt = require('./pointUtils').isAdjacentEndExt
 
 var genArray = require('./utils').genArray
 var getSplitPoints = require('./utils').getSplitPoints
 var pushArray = require('./utils').pushArray
 var mapFrom = require('./utils').mapFrom
 var includeArr = require('./utils').includeArr
+var arePointsEqual = require('./utils').arePointsEqual
 var flattenDoubleArray = require('./utils').flattenDoubleArray
 
 //Add all missing crossborder points for a polygon
@@ -58,10 +61,10 @@ function addSplitPointsAll(data, gridSize) {
 function isPointInside(testPoint, feature) {
   const featurePoints = feature.geometry.coordinates;
   return featurePoints.map(polygonPoints => {
-    const topRef = getPolygonOuterPoint(testPoint,polygonPoints,'top');
-    const bottomRef = getPolygonOuterPoint(testPoint,polygonPoints,'bottom');
-    const leftRef = getPolygonOuterPoint(testPoint,polygonPoints,'left');
-    const rightRef = getPolygonOuterPoint(testPoint,polygonPoints,'right');
+    const topRef = getPolygonOuterPoint(testPoint, polygonPoints, 'top');
+    const bottomRef = getPolygonOuterPoint(testPoint, polygonPoints, 'bottom');
+    const leftRef = getPolygonOuterPoint(testPoint, polygonPoints, 'left');
+    const rightRef = getPolygonOuterPoint(testPoint, polygonPoints, 'right');
 
     const isInTop = crossPointNb(testPoint, topRef, polygonPoints) % 2 === 1;
     const isInBottom = crossPointNb(testPoint, bottomRef, polygonPoints) % 2 === 1;
@@ -91,13 +94,121 @@ function generateCornerPoints(data, xStart, xEnd, yStart, yEnd, gridSize) {
 }
 
 //Generate the subset for a square area
+function buildExcludedAdjacentPathCollection(minX, maxX, minY, maxY, coordinates) {
+  const collection = [];
+
+  //Build a collection of all adjacent paths except inner bouncing
+  coordinates.map(polygonPoints => {
+    //Find point to start roaming
+    const start = polygonPoints.findIndex((point, idx) => {
+      const prevPoint = polygonPoints[idx === 0 ? polygonPoints.length - 1 : idx - 1]
+      return isSimpleEntryPoint(minX, maxX, minY, maxY, point, prevPoint);
+    })
+    if (start === -1) {
+      return null;
+    }
+
+    //Roam polygonPoints
+    mapFrom(polygonPoints, start, (pt, idx) => {
+      const point = polygonPoints[idx]
+      const prevPoint = polygonPoints[idx === 0 ? polygonPoints.length - 1 : idx - 1]
+      const nextPoint = polygonPoints[idx === polygonPoints.length - 1 ? 0 : idx + 1]
+
+      //Add bounce points
+      if (
+        isBouncePoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint) &&
+        !isInCorner(minX, maxX, minY, maxY, point)
+      ) {
+        collection.push([point]);
+      }
+      //Add bounce points in corner which are not relevant
+      if (
+        isBouncePoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint) &&
+        isInCorner(minX, maxX, minY, maxY, point) &&
+        !isInnerCorner(minX, maxX, minY, maxY, point, polygonPoints)
+      ) {
+        collection.push([point]);
+      }
+      //Add points to last collection path if in an adjacent path, and not first member
+      if (
+        isOnSquareSide(minX, maxX, minY, maxY, point) &&
+        isOnSquareSide(minX, maxX, minY, maxY, prevPoint) &&
+        areOnSameSide(point, prevPoint)
+      ) {
+        collection[collection.length - 1].push(point);
+      }
+      //Start a new path if first point of a multiple point adjacent path
+      if (
+        isOnSquareSide(minX, maxX, minY, maxY, point) &&
+        (isOnSquareSide(minX, maxX, minY, maxY, nextPoint) &&
+          areOnSameSide(point, nextPoint)) &&
+        (!isOnSquareSide(minX, maxX, minY, maxY, prevPoint) ||
+          !areOnSameSide(point, prevPoint))
+      ) {
+        collection.push([point]);
+      }
+    })
+  })
+  if (collection.length < 1) {
+    return collection
+  }
+
+  //Filter this collection so that it keeps only what should be removed
+  const filteredCollection = [];
+  collection.map(path => {
+    if (path.length === 1) {
+      filteredCollection.push(path)
+    } else {
+      const polygonPoints = coordinates.length === 1 ?
+        coordinates[0] :
+        coordinates.find(polygon => includeArr(polygon, path[0]));
+
+      const startPointIndex = polygonPoints.findIndex(point => arePointsEqual(point, path[0]));
+      const endPointIndex = polygonPoints.findIndex(point => arePointsEqual(point, path[path.length - 1]));
+
+      const startPoint = polygonPoints[startPointIndex];
+      const followingStartPoint = polygonPoints[startPointIndex === 0 ? polygonPoints.length - 1 : startPointIndex - 1];
+      const followedStartPoint = polygonPoints[startPointIndex === polygonPoints.length - 1 ? 0 : startPointIndex + 1];
+
+      const endPoint = polygonPoints[endPointIndex];
+      const followingEndPoint = polygonPoints[endPointIndex === polygonPoints.length - 1 ? 0 : endPointIndex + 1];
+      const followedEndPoint = polygonPoints[endPointIndex === 0 ? polygonPoints.length - 1 : endPointIndex - 1];
+
+      if (
+        (isInjectedEntryPoint(minX, maxX, minY, maxY, startPoint, followingStartPoint) !==
+          isAdjacentEndExt(minX, maxX, minY, maxY, followedStartPoint, startPoint, polygonPoints)) &&
+        (isInjectedEntryPoint(minX, maxX, minY, maxY, endPoint, followingEndPoint) !==
+          isAdjacentEndExt(minX, maxX, minY, maxY, followedEndPoint, endPoint, polygonPoints))
+      ) {
+        if (isInjectedEntryPoint(minX, maxX, minY, maxY, endPoint, followingEndPoint)) {
+          path.splice(path.length - 1, 1)
+        }
+        if (isInjectedEntryPoint(minX, maxX, minY, maxY, startPoint, followingStartPoint)) {
+          path.splice(0, 1)
+        }
+        if (path.length > 0) {
+          filteredCollection.push(path)
+        }
+      }
+    }
+  })
+  return filteredCollection
+}
+
+function removeCollection(pointSubset, adjacentPathToExclude) {
+  const pointsToRemove = flattenDoubleArray(adjacentPathToExclude)
+  return pointSubset.map(path =>
+    path.filter(point => !includeArr(pointsToRemove, point))
+  ).filter(path => path.length > 0)
+}
+
 function generatePointSubset(minX, maxX, minY, maxY, coordinates) {
   const pointSubset = [];
   coordinates.map(polygonPoints => {
     const start = polygonPoints.findIndex((point, idx) => {
       const prevPoint = polygonPoints[idx === 0 ? polygonPoints.length - 1 : idx - 1]
       const nextPoint = polygonPoints[idx === polygonPoints.length - 1 ? 0 : idx + 1]
-      return isEntryPoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint);
+      return isSimpleEntryPoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint);
     })
     if (start === -1) {
       if (polygonPoints.every(point => isInSquare(minX, maxX, minY, maxY, point))) {
@@ -106,67 +217,26 @@ function generatePointSubset(minX, maxX, minY, maxY, coordinates) {
       return null;
     }
     let currentPathIdx = -1
+
     mapFrom(polygonPoints, start, (pt, idx) => {
       const point = polygonPoints[idx]
       const prevPoint = polygonPoints[idx === 0 ? polygonPoints.length - 1 : idx - 1]
-      const nextPoint = polygonPoints[idx === polygonPoints.length - 1 ? 0 : idx + 1]
 
-      if (isEntryPoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint)) {
+      if (isSimpleEntryPoint(minX, maxX, minY, maxY, point, prevPoint)) {
         pointSubset.push([point]);
         currentPathIdx++;
-      } else if (
-        isInCorner(minX, maxX, minY, maxY, point) &&
-        !isInnerCorner(minX, maxX, minY, maxY, point, polygonPoints)
-      ) {
-        return null;
-      } else if (
-        isInCorner(minX, maxX, minY, maxY, point) &&
-        isBouncePoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint) &&
-        isInnerCorner(minX, maxX, minY, maxY, point, polygonPoints)
-      ) {
-        pointSubset.push([point]);
-        currentPathIdx++;
-      } else if (
-        !isInCorner(minX, maxX, minY, maxY, point) &&
-        isBouncePoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint)
-      ) {
-        return null;
       } else if (isInSquare(minX, maxX, minY, maxY, point)) {
         pointSubset[currentPathIdx].push(point);
       }
     })
   })
+  //At this stage, every point included in square area is added
 
-  //Filtering out non relevant points (don't have neighbors strictly in on in other square sides)
-  const filteredPointSubset = [];
-  pointSubset.map(path => {
-    const newPath = path.filter((point,idx) => {
-      const prevPoint = idx === 0 ? null : path[idx - 1]
-      const nextPoint = idx === path.length - 1 ? null : path[idx + 1] 
-
-      const isPrevPointValid = prevPoint ?
-        (isStrictlyInSquare(minX, maxX, minY, maxY, prevPoint) ||
-          !areOnSameSide(point,prevPoint)
-        ) : false
-      const isNextPointValid = nextPoint ?
-        (isStrictlyInSquare(minX, maxX, minY, maxY, nextPoint) ||
-          !areOnSameSide(point,nextPoint)
-        ) : false
-      return (
-        isStrictlyInSquare(minX, maxX, minY, maxY, point) || (
-          isOnSquareSide(minX, maxX, minY, maxY, point) && (
-            isPrevPointValid || 
-            isNextPointValid ||
-            isInCorner(minX, maxX, minY, maxY, point)
-          )
-        )
-      )
-    })
-    if(newPath.length > 0){
-      filteredPointSubset.push(newPath)
-    }
-  })
-
+  //Filter all irrelevant paths, subpaths and points
+  const adjacentPathToExclude = buildExcludedAdjacentPathCollection(minX, maxX, minY, maxY, coordinates);
+  const filteredPointSubset = adjacentPathToExclude.length > 0 ?
+    removeCollection(pointSubset, adjacentPathToExclude) :
+    pointSubset;
   return filteredPointSubset;
 }
 

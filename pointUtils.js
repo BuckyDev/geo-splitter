@@ -5,8 +5,11 @@ var mapFrom = require('./utils').mapFrom
 var arePointsEqual = require('./utils').arePointsEqual
 
 function isOnSquareSide(minX, maxX, minY, maxY, point) {
-  const validCoord = [minX, maxX, minY, maxY];
-  return validCoord.includes(point[0]) || validCoord.includes(point[1])
+  const validCoordX = [minX, maxX];
+  const validCoordY = [minY, maxY];
+  return (
+    (validCoordX.includes(point[0]) && point[1] >= minY && point[1] <= maxY) || 
+    validCoordY.includes(point[1]) && point[0] >= minX && point[0] <= maxX)
 };
 
 function isAdjacentAngle(point, prevPoint, nextPoint, type) {
@@ -222,6 +225,65 @@ function isEntryPoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint) {
     !isInSquare(minX, maxX, minY, maxY, prevPoint)
 }
 
+function isSimpleEntryPoint(minX, maxX, minY, maxY, point, prevPoint) {
+  return isInSquare(minX, maxX, minY, maxY, point) &&
+    !isInSquare(minX, maxX, minY, maxY, prevPoint)
+}
+
+function isInjectedEntryPoint(minX, maxX, minY, maxY, point, followingPoint) {
+  return isOnSquareSide(minX, maxX, minY, maxY, point) &&
+    (
+      isStrictlyInSquare(minX, maxX, minY, maxY, followingPoint) ||
+      (
+        isOnSquareSide(minX, maxX, minY, maxY, followingPoint) &&
+        !areOnSameSide(point, followingPoint)
+      )
+    )
+}
+
+function getCommonCoord(pointA,pointB){
+  if(pointA[0]===pointB[0]){ 
+    return 0;
+  } else if(pointA[1]===pointB[1]){ 
+    return 1;
+  }
+  return null;
+}
+
+function isAdjacentEndExt(minX, maxX, minY, maxY, followedPoint, point, pointCloud) {
+  //Get direction where to count cross points
+  let direction;
+  const commonCoord = getCommonCoord(followedPoint, point);
+  if(commonCoord === 1){
+    if(followedPoint[1] > point[1]){direction='bottom'}
+    else {direction='top'}
+  }
+  if(commonCoord === 0){
+    if(followedPoint[0] > point[0]){direction='left'}
+    else {direction='right'}
+  }
+  if(arePointsEqual([minX,minY],point)){
+    if(direction==='bottom'){direction='right'}
+    if(direction==='left'){direction='top'}
+  }
+  if(arePointsEqual([minX,maxY],point)){
+    if(direction==='top'){direction='right'}
+    if(direction==='left'){direction='bottom'}
+  }
+  if(arePointsEqual([maxX,maxY],point)){
+    if(direction==='top'){direction='left'}
+    if(direction==='right'){direction='bottom'}
+  }
+  if(arePointsEqual([maxX,minY],point)){
+    if(direction==='bottom'){direction='left'}
+    if(direction==='right'){direction='top'}
+  }
+  //Count points
+  const ref = getPolygonOuterPoint(point, pointCloud, direction)
+  const isExt = crossPointNb(ref, point, pointCloud) % 2 === 0;
+  return isExt;
+}
+
 function hasFollowingPoint(minX, maxX, minY, maxY, origin, pointCloud) {
   const side = splitSquareSide2(minX, maxX, minY, maxY, origin);
   return pointCloud.filter(point => {
@@ -252,5 +314,8 @@ module.exports = {
   isInnerCorner,
   isBouncePoint,
   isEntryPoint,
+  isSimpleEntryPoint,
   hasFollowingPoint,
+  isInjectedEntryPoint,
+  isAdjacentEndExt,
 }
