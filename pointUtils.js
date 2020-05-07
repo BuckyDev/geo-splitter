@@ -259,11 +259,11 @@ function isAdjacentEndExt(minX, maxX, minY, maxY, followedPoint, point, pointClo
   let direction;
   const commonCoord = getCommonCoord(followedPoint, point);
   if(commonCoord === 1){
-    if(followedPoint[1] > point[1]){direction='left'}
+    if(followedPoint[0] > point[0]){direction='left'}
     else {direction='right'}
   }
   if(commonCoord === 0){
-    if(followedPoint[0] > point[0]){direction='bottom'}
+    if(followedPoint[1] > point[1]){direction='bottom'}
     else {direction='top'}
   }
   if(arePointsEqual([minX,minY],point)){

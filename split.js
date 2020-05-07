@@ -149,9 +149,7 @@ function buildExcludedAdjacentPathCollection(minX, maxX, minY, maxY, coordinates
       }
     })
   })
-  if (minX === 6 && minY === 6) {
-    console.log(collection)
-  }
+
   if (collection.length < 1) {
     return collection
   }
@@ -176,14 +174,6 @@ function buildExcludedAdjacentPathCollection(minX, maxX, minY, maxY, coordinates
       const endPoint = polygonPoints[endPointIndex];
       const followingEndPoint = polygonPoints[endPointIndex === polygonPoints.length - 1 ? 0 : endPointIndex + 1];
       const followedEndPoint = polygonPoints[endPointIndex === 0 ? polygonPoints.length - 1 : endPointIndex - 1];
-
-      if (minX === 6 && minY === 6) {
-        console.log(polygonPoints)
-        console.log(isInjectedEntryPoint(minX, maxX, minY, maxY, startPoint, followingStartPoint))
-        console.log(isAdjacentEndExt(minX, maxX, minY, maxY, followedStartPoint, startPoint, polygonPoints))
-        console.log(isInjectedEntryPoint(minX, maxX, minY, maxY, endPoint, followingEndPoint))
-        console.log(isAdjacentEndExt(minX, maxX, minY, maxY, followedEndPoint, endPoint, polygonPoints))
-      }
 
       if (
         (isInjectedEntryPoint(minX, maxX, minY, maxY, startPoint, followingStartPoint) !==
