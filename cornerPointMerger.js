@@ -10,6 +10,7 @@ var getPolygonOuterPoint = require('./pointUtils').getPolygonOuterPoint
 var splitSquareSide2 = require('./pointUtils').splitSquareSide2
 var hasFollowingPoint = require('./pointUtils').hasFollowingPoint
 var isOnSquareSide = require('./pointUtils').isOnSquareSide
+var fixBunk = require('./pointUtils').fixBunk
 
 var includeArr = require('./utils').includeArr
 var pushArray = require('./utils').pushArray
@@ -276,7 +277,7 @@ function cornerPointMerger(minX, maxX, minY, maxY, pointSubset, cornerPointSubse
 
   //Handles single path exclusive polygon => it can only close on itself so it can be added directly
   if (pointSubset.length === 1 && orderedCornerPoints.length === 0) {
-    newSubset.push(pointSubset[0]);
+    newSubset.push(fixBunk(minX, maxX, minY, maxY, pointSubset[0], featurePoints));
     return newSubset;
   }
 
@@ -300,7 +301,7 @@ function cornerPointMerger(minX, maxX, minY, maxY, pointSubset, cornerPointSubse
   if (pointSubset.length > 0 && orderedCornerPoints.length === 0) {
     while (pointSubset.length > 0) {
       const newPath = buildPathOnVirtual(minX, maxX, minY, maxY, pointSubset, featurePoints);
-      newSubset.push(newPath)
+      newSubset.push(fixBunk(minX, maxX, minY, maxY, newPath, featurePoints))
     }
   }
   return newSubset;

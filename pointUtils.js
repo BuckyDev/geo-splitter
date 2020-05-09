@@ -3,12 +3,13 @@ var max = require('./utils').max
 var findPointIndex = require('./utils').findPointIndex
 var mapFrom = require('./utils').mapFrom
 var arePointsEqual = require('./utils').arePointsEqual
+var flattenDoubleArray = require('./utils').flattenDoubleArray
 
 function isOnSquareSide(minX, maxX, minY, maxY, point) {
   const validCoordX = [minX, maxX];
   const validCoordY = [minY, maxY];
   return (
-    (validCoordX.includes(point[0]) && point[1] >= minY && point[1] <= maxY) || 
+    (validCoordX.includes(point[0]) && point[1] >= minY && point[1] <= maxY) ||
     validCoordY.includes(point[1]) && point[0] >= minX && point[0] <= maxX)
 };
 
@@ -64,7 +65,7 @@ function splitSquareSide2(minX, maxX, minY, maxY, splitPoint) {
   if (splitPoint[1] === maxY && splitPoint[0] < maxX) { return 'top' }
 }
 
-function areOnSameSide(pointA,pointB){
+function areOnSameSide(pointA, pointB) {
   return pointA[0] === pointB[0] || pointA[1] === pointB[1]
 }
 
@@ -217,6 +218,30 @@ function isInnerCorner(minX, maxX, minY, maxY, point, polygonPoints) {
   }
 }
 
+function isStrictInnerCorner(minX, maxX, minY, maxY, point, polygonPoints) {
+  const topRef = [point[0], max(polygonPoints, 1) + 1];
+  const bottomRef = [point[0], min(polygonPoints, 1) - 1];
+  const rightRef = [max(polygonPoints, 0) + 1, point[1]];
+  const leftRef = [min(polygonPoints, 0) - 1, point[1]];
+
+  if (arePointsEqual([minX, minY], point)) {
+    return crossPointNb(topRef, point, polygonPoints) % 2 === 1 &&
+      crossPointNb(rightRef, point, polygonPoints) % 2 === 1
+  }
+  if (arePointsEqual([minX, maxY], point)) {
+    return crossPointNb(bottomRef, point, polygonPoints) % 2 === 1 &&
+      crossPointNb(rightRef, point, polygonPoints) % 2 === 1
+  }
+  if (arePointsEqual([maxX, maxY], point)) {
+    return crossPointNb(bottomRef, point, polygonPoints) % 2 === 1 &&
+      crossPointNb(leftRef, point, polygonPoints) % 2 === 1
+  }
+  if (arePointsEqual([maxX, minY], point)) {
+    return crossPointNb(topRef, point, polygonPoints) % 2 === 1 &&
+      crossPointNb(leftRef, point, polygonPoints) % 2 === 1
+  }
+}
+
 function isBouncePoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint) {
   return isInSquare(minX, maxX, minY, maxY, point) &&
     !isInSquare(minX, maxX, minY, maxY, nextPoint) &&
@@ -245,10 +270,10 @@ function isInjectedEntryPoint(minX, maxX, minY, maxY, point, followingPoint) {
     )
 }
 
-function getCommonCoord(pointA,pointB){
-  if(pointA[0]===pointB[0]){ 
+function getCommonCoord(pointA, pointB) {
+  if (pointA[0] === pointB[0]) {
     return 0;
-  } else if(pointA[1]===pointB[1]){ 
+  } else if (pointA[1] === pointB[1]) {
     return 1;
   }
   return null;
@@ -258,29 +283,29 @@ function isAdjacentEndExt(minX, maxX, minY, maxY, followedPoint, point, pointClo
   //Get direction where to count cross points
   let direction;
   const commonCoord = getCommonCoord(followedPoint, point);
-  if(commonCoord === 1){
-    if(followedPoint[0] > point[0]){direction='left'}
-    else {direction='right'}
+  if (commonCoord === 1) {
+    if (followedPoint[0] > point[0]) { direction = 'left' }
+    else { direction = 'right' }
   }
-  if(commonCoord === 0){
-    if(followedPoint[1] > point[1]){direction='bottom'}
-    else {direction='top'}
+  if (commonCoord === 0) {
+    if (followedPoint[1] > point[1]) { direction = 'bottom' }
+    else { direction = 'top' }
   }
-  if(arePointsEqual([minX,minY],point)){
-    if(direction==='bottom'){direction='right'}
-    if(direction==='left'){direction='top'}
+  if (arePointsEqual([minX, minY], point)) {
+    if (direction === 'bottom') { direction = 'right' }
+    if (direction === 'left') { direction = 'top' }
   }
-  if(arePointsEqual([minX,maxY],point)){
-    if(direction==='top'){direction='right'}
-    if(direction==='left'){direction='bottom'}
+  if (arePointsEqual([minX, maxY], point)) {
+    if (direction === 'top') { direction = 'right' }
+    if (direction === 'left') { direction = 'bottom' }
   }
-  if(arePointsEqual([maxX,maxY],point)){
-    if(direction==='top'){direction='left'}
-    if(direction==='right'){direction='bottom'}
+  if (arePointsEqual([maxX, maxY], point)) {
+    if (direction === 'top') { direction = 'left' }
+    if (direction === 'right') { direction = 'bottom' }
   }
-  if(arePointsEqual([maxX,minY],point)){
-    if(direction==='bottom'){direction='left'}
-    if(direction==='right'){direction='top'}
+  if (arePointsEqual([maxX, minY], point)) {
+    if (direction === 'bottom') { direction = 'left' }
+    if (direction === 'right') { direction = 'top' }
   }
   //Count points
   const ref = getPolygonOuterPoint(point, pointCloud, direction)
@@ -304,6 +329,17 @@ function hasFollowingPoint(minX, maxX, minY, maxY, originPoint, pointCloud) {
   }).length > 0
 }
 
+//Adds points to close a polygon which path points bounces corner inside
+function fixBunk(minX, maxX, minY, maxY, path, featurePoints) {
+  const addList = path.filter((point, idx) =>
+    idx > 0 &&
+    idx < path.length - 1 &&
+    isInCorner(minX, maxX, minY, maxY, point) &&
+    isStrictInnerCorner(minX, maxX, minY, maxY, point, flattenDoubleArray(featurePoints)) //BAD STUFF TO FLATTEN
+  )
+  return path.concat(addList.reverse())
+}
+
 module.exports = {
   areOnSameSide,
   isOnSquareSide,
@@ -323,4 +359,5 @@ module.exports = {
   isInjectedEntryPoint,
   isAdjacentEndExt,
   isOnSingleSide,
+  fixBunk,
 }
