@@ -180,16 +180,16 @@ function crossPointNb(startPoint, endPoint, pointCloud) {
   }).length
 }
 
-function getPolygonOuterPoint(origin, polygonPoints, side) {
+function getPolygonOuterPoint(point, polygonPoints, side) {
   switch (side) {
     case 'left':
-      return [min(polygonPoints, 0) - 1, origin[1]];
+      return [min(polygonPoints, 0) - 1, point[1]];
     case 'right':
-      return [max(polygonPoints, 0) + 1, origin[1]];
+      return [max(polygonPoints, 0) + 1, point[1]];
     case 'bottom':
-      return [origin[0], min(polygonPoints, 1) - 1];
+      return [point[0], min(polygonPoints, 1) - 1];
     case 'top':
-      return [origin[0], max(polygonPoints, 1) + 1];
+      return [point[0], max(polygonPoints, 1) + 1];
   }
 }
 
@@ -288,18 +288,18 @@ function isAdjacentEndExt(minX, maxX, minY, maxY, followedPoint, point, pointClo
   return isExt;
 }
 
-function hasFollowingPoint(minX, maxX, minY, maxY, origin, pointCloud) {
-  const side = splitSquareSide2(minX, maxX, minY, maxY, origin);
+function hasFollowingPoint(minX, maxX, minY, maxY, originPoint, pointCloud) {
+  const side = splitSquareSide2(minX, maxX, minY, maxY, originPoint);
   return pointCloud.filter(point => {
     switch (side) {
       case 'left':
-        return point[0] === minX && point[1] > origin[1]
+        return point[0] === minX && point[1] > originPoint[1]
       case 'right':
-        return point[0] === maxX && point[1] < origin[1]
+        return point[0] === maxX && point[1] < originPoint[1]
       case 'bottom':
-        return point[1] === minY && point[0] < origin[0]
+        return point[1] === minY && point[0] < originPoint[0]
       case 'top':
-        return point[1] === maxY && point[0] > origin[0]
+        return point[1] === maxY && point[0] > originPoint[0]
     }
   }).length > 0
 }
