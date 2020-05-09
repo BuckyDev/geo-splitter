@@ -28,15 +28,6 @@ function flattenDoubleArray(arr) {
   return result;
 }
 
-function substractArr(resultArr, removedArr) {
-  removedArr.map(val => {
-    const idx = resultArr.indexOf(val)
-    if (idx > -1) {
-      resultArr.splice(idx, 1);
-    }
-  })
-}
-
 function findPointIndex(pointArr, point) {
   let index = -1
   pointArr.map((el, idx) => {
@@ -110,40 +101,61 @@ function getSplitPoints(segment, gridSize) {
 
   const points = [];
 
-  //Cross a vertical line
+  //Cross at least one vertical line
   if (roundedTo(Math.max(x1, x2), gridSize) !== roundedTo(Math.min(x1, x2), gridSize)) {
-    const xline = roundedTo(Math.max(x1, x2), gridSize)
-    const newPoint = [xline, (xline - x1) * r + y1]
-    if (!includeArr(segment, newPoint)) {
-      points.push(newPoint)
+    let xline = roundedTo(Math.max(x1, x2), gridSize)
+    while (xline <= Math.max(x1, x2) && xline >= Math.min(x1, x2)) {
+      const newPoint = [xline, (xline - x1) * r + y1]
+      if (!includeArr(segment, newPoint)) {
+        points.push(newPoint)
+      }
+      xline -= gridSize
     }
   }
 
-  //Cross a horizontal line
+  //Cross at least one horizontal line
   if (roundedTo(Math.max(y1, y2), gridSize) !== roundedTo(Math.min(y1, y2), gridSize)) {
-    const yline = roundedTo(Math.max(y1, y2), gridSize)
-    const newPoint = [(yline - y1) / r + x1, yline]
-    if (
-      !includeArr(segment, newPoint) &&
-      !eqArr(points[0] || [], newPoint)
-    ) {
-      points.push(newPoint)
+    let yline = roundedTo(Math.max(y1, y2), gridSize)
+    while (yline <= Math.max(y1, y2) && yline >= Math.min(y1, y2)) {
+      const newPoint = [(yline - y1) / r + x1, yline]
+      if (
+        !includeArr(segment, newPoint) &&
+        !includeArr(points || [], newPoint)
+      ) {
+        points.push(newPoint)
+      }
+      yline -= gridSize
     }
   }
 
-  //Revert order if more natural
-  if (points.length > 1 && distance([x1, y1], points[0]) > distance([x1, y1], points[1])) {
-    points.reverse();
+  //Sort points by distance to [x1,y1]
+  const sortedPoints = [];
+  while(points.length > 0){
+    let minDistance = null;
+    let minDistancePoint = null;
+    let minDistanceIdx = null;
+    points.map((point,idx) => {
+      const dist = distance([x1, y1], point);
+      if(
+        minDistance === null ||
+        dist < minDistance
+      ){
+        minDistance = dist
+        minDistancePoint = point;
+        minDistanceIdx = idx;
+      }
+    })
+    sortedPoints.push(minDistancePoint);
+    points.splice(minDistanceIdx,1)
   }
 
-  return points;
+  return sortedPoints;
 }
 
 module.exports = {
   max,
   min,
   flattenDoubleArray,
-  substractArr,
   findPointIndex,
   substractPoints,
   mapFrom,

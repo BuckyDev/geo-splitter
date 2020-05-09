@@ -1,18 +1,20 @@
-var includeArr = require('./utils').includeArr
 var min = require('./utils').min
 var max = require('./utils').max
 var findPointIndex = require('./utils').findPointIndex
 var mapFrom = require('./utils').mapFrom
 var arePointsEqual = require('./utils').arePointsEqual
-
-//If a point is on a grid line
-function isSplitPoint(point, gridSize) {
-  return point[0] % gridSize === 0 || point[1] % gridSize === 0
-};
+var flattenDoubleArray = require('./utils').flattenDoubleArray
 
 function isOnSquareSide(minX, maxX, minY, maxY, point) {
-  const validCoord = [minX, maxX, minY, maxY];
-  return validCoord.includes(point[0]) || validCoord.includes(point[1])
+  const validCoordX = [minX, maxX];
+  const validCoordY = [minY, maxY];
+  return (
+    (validCoordX.includes(point[0]) && point[1] >= minY && point[1] <= maxY) ||
+    validCoordY.includes(point[1]) && point[0] >= minX && point[0] <= maxX)
+};
+
+function isOnSingleSide(path) {
+  return path.every(point => point[0] === path[0][0]) || path.every(point => point[1] === path[0][1])
 };
 
 function isAdjacentAngle(point, prevPoint, nextPoint, type) {
@@ -63,42 +65,14 @@ function splitSquareSide2(minX, maxX, minY, maxY, splitPoint) {
   if (splitPoint[1] === maxY && splitPoint[0] < maxX) { return 'top' }
 }
 
-const SQUARE = ['top', 'right', 'bottom', 'left'];
-
-function isCornerPath(minX, maxX, minY, maxY, path) {
-  const startPoint = path[0];
-  const endPoint = path[path.length - 1];
-  const startSide = splitSquareSide(minX, maxX, minY, maxY, startPoint);
-  const endSide = splitSquareSide(minX, maxX, minY, maxY, endPoint);
-  const gap = Math.abs(SQUARE.indexOf(endSide) - SQUARE.indexOf(startSide))
-  if (gap === 1 || gap === 3) {
-    return true;
-  }
-  return false;
+function areOnSameSide(pointA, pointB) {
+  return pointA[0] === pointB[0] || pointA[1] === pointB[1]
 }
 
 //Gives if the point is at the corner of the square
 function isInCorner(minX, maxX, minY, maxY, point) {
   const validCoord = [minX, maxX, minY, maxY];
   return validCoord.includes(point[0]) && validCoord.includes(point[1])
-}
-
-function followingCorner(minX, maxX, minY, maxY, point) {
-  const side = splitSquareSide2(minX, maxX, minY, maxY, point);
-  switch (side) {
-    case 'left':
-      return [minX, maxY];
-    case 'right':
-      return [maxX, minY];
-    case 'bottom':
-      return [minX, minY];
-    case 'top':
-      return [maxX, maxY];
-  }
-}
-
-function isVirtual(point, cornerPoints) {
-  return includeArr(cornerPoints, point);
 }
 
 function adjacentPathReference(point, cloudPoint, commonCoord) {
@@ -207,16 +181,16 @@ function crossPointNb(startPoint, endPoint, pointCloud) {
   }).length
 }
 
-function getPolygonOuterPoint(origin, polygonPoints, side) {
+function getPolygonOuterPoint(point, polygonPoints, side) {
   switch (side) {
     case 'left':
-      return [min(polygonPoints, 0) - 1, origin[1]];
+      return [min(polygonPoints, 0) - 1, point[1]];
     case 'right':
-      return [max(polygonPoints, 0) + 1, origin[1]];
+      return [max(polygonPoints, 0) + 1, point[1]];
     case 'bottom':
-      return [origin[0], min(polygonPoints, 1) - 1];
+      return [point[0], min(polygonPoints, 1) - 1];
     case 'top':
-      return [origin[0], max(polygonPoints, 1) + 1];
+      return [point[0], max(polygonPoints, 1) + 1];
   }
 }
 
@@ -244,6 +218,30 @@ function isInnerCorner(minX, maxX, minY, maxY, point, polygonPoints) {
   }
 }
 
+function isStrictInnerCorner(minX, maxX, minY, maxY, point, polygonPoints) {
+  const topRef = [point[0], max(polygonPoints, 1) + 1];
+  const bottomRef = [point[0], min(polygonPoints, 1) - 1];
+  const rightRef = [max(polygonPoints, 0) + 1, point[1]];
+  const leftRef = [min(polygonPoints, 0) - 1, point[1]];
+
+  if (arePointsEqual([minX, minY], point)) {
+    return crossPointNb(topRef, point, polygonPoints) % 2 === 1 &&
+      crossPointNb(rightRef, point, polygonPoints) % 2 === 1
+  }
+  if (arePointsEqual([minX, maxY], point)) {
+    return crossPointNb(bottomRef, point, polygonPoints) % 2 === 1 &&
+      crossPointNb(rightRef, point, polygonPoints) % 2 === 1
+  }
+  if (arePointsEqual([maxX, maxY], point)) {
+    return crossPointNb(bottomRef, point, polygonPoints) % 2 === 1 &&
+      crossPointNb(leftRef, point, polygonPoints) % 2 === 1
+  }
+  if (arePointsEqual([maxX, minY], point)) {
+    return crossPointNb(topRef, point, polygonPoints) % 2 === 1 &&
+      crossPointNb(leftRef, point, polygonPoints) % 2 === 1
+  }
+}
+
 function isBouncePoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint) {
   return isInSquare(minX, maxX, minY, maxY, point) &&
     !isInSquare(minX, maxX, minY, maxY, nextPoint) &&
@@ -256,170 +254,110 @@ function isEntryPoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint) {
     !isInSquare(minX, maxX, minY, maxY, prevPoint)
 }
 
-function isStrictEntryPoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint) {
+function isSimpleEntryPoint(minX, maxX, minY, maxY, point, prevPoint) {
   return isInSquare(minX, maxX, minY, maxY, point) &&
+    !isInSquare(minX, maxX, minY, maxY, prevPoint)
+}
+
+function isInjectedEntryPoint(minX, maxX, minY, maxY, point, followingPoint) {
+  return isOnSquareSide(minX, maxX, minY, maxY, point) &&
     (
-      isStrictlyInSquare(minX, maxX, minY, maxY, nextPoint) ||
-      (isOnSquareSide(minX, maxX, minY, maxY, nextPoint) &&
-        splitSquareSide2(minX, maxX, minY, maxY, nextPoint) !== splitSquareSide2(minX, maxX, minY, maxY, point))
-    ) &&
-    !isStrictlyInSquare(minX, maxX, minY, maxY, prevPoint)
+      isStrictlyInSquare(minX, maxX, minY, maxY, followingPoint) ||
+      (
+        isOnSquareSide(minX, maxX, minY, maxY, followingPoint) &&
+        !areOnSameSide(point, followingPoint)
+      )
+    )
 }
 
-function isExitPoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint) {
-  return isInSquare(minX, maxX, minY, maxY, point) &&
-    !isInSquare(minX, maxX, minY, maxY, nextPoint) &&
-    isInSquare(minX, maxX, minY, maxY, prevPoint)
-}
-
-function isStrictExitPoint(minX, maxX, minY, maxY, point, prevPoint, nextPoint) {
-  return isInSquare(minX, maxX, minY, maxY, point) &&
-    !isInSquare(minX, maxX, minY, maxY, nextPoint) &&
-    isStrictlyInSquare(minX, maxX, minY, maxY, prevPoint)
-}
-
-//Get relative points
-
-function getUpPointsNb(testPoint, pointCloud) {
-  return pointCloud.filter((point, idx) => {
-    const prevPoint = pointCloud[idx === 0 ? pointCloud.length - 1 : idx - 1]
-    const nextPoint = pointCloud[idx === pointCloud.length - 1 ? 0 : idx + 1]
-
-    return (point[0] === testPoint[0]) &&
-      (point[1] > testPoint[1]) &&
-      !isAdjacentAngle(point, prevPoint, nextPoint, 'vertical') &&
-      !arePointsAligned(prevPoint, point, 'vertical')
-  }).length
-}
-
-function getDownPointsNb(testPoint, pointCloud) {
-  return pointCloud.filter((point, idx) => {
-    const prevPoint = pointCloud[idx === 0 ? pointCloud.length - 1 : idx - 1]
-    const nextPoint = pointCloud[idx === pointCloud.length - 1 ? 0 : idx + 1]
-
-    return (point[0] === testPoint[0]) &&
-      (point[1] < testPoint[1]) &&
-      !isAdjacentAngle(point, prevPoint, nextPoint, 'vertical') &&
-      !arePointsAligned(prevPoint, point, 'vertical')
-  }).length
-}
-
-function getLeftPointsNb(testPoint, pointCloud) {
-  return pointCloud.filter((point, idx) => {
-    const prevPoint = pointCloud[idx === 0 ? pointCloud.length - 1 : idx - 1]
-    const nextPoint = pointCloud[idx === pointCloud.length - 1 ? 0 : idx + 1]
-
-    return (point[0] < testPoint[0]) &&
-      (point[1] === testPoint[1]) &&
-      !isAdjacentAngle(point, prevPoint, nextPoint, 'horizontal') &&
-      !arePointsAligned(prevPoint, point, 'horizontal')
-  }).length
-}
-
-function getRightPointsNb(testPoint, pointCloud) {
-  return pointCloud.filter((point, idx) => {
-    const prevPoint = pointCloud[idx === 0 ? pointCloud.length - 1 : idx - 1]
-    const nextPoint = pointCloud[idx === pointCloud.length - 1 ? 0 : idx + 1]
-
-    return (point[0] > testPoint[0]) &&
-      (point[1] === testPoint[1]) &&
-      !isAdjacentAngle(point, prevPoint, nextPoint, 'horizontal') &&
-      !arePointsAligned(prevPoint, point, 'horizontal')
-  }).length
-}
-
-//Gives on which grid line that split point belongs
-function splitPointType(point, gridSize) {
-  if (point[0] % gridSize === 0 && point[1] % gridSize === 0) {
-    return 'double'
+function getCommonCoord(pointA, pointB) {
+  if (pointA[0] === pointB[0]) {
+    return 0;
+  } else if (pointA[1] === pointB[1]) {
+    return 1;
   }
-  if (point[0] % gridSize === 0 && !(point[1] % gridSize === 0)) {
-    return 'vertical'
-  }
-  if (!(point[0] % gridSize === 0) && point[1] % gridSize === 0) {
-    return 'horizontal'
-  }
-  if (!(point[0] % gridSize === 0) && !(point[1] % gridSize === 0)) {
-    return 'none'
-  }
+  return null;
 }
 
-//Gives if 2 two points are aligned in a given axis
-function arePointsAligned(pointA, pointB, type) {
-  const coord = type === 'vertical' ? 0 : 1;
-  return pointA[coord] === pointB[coord];
-}
-
-//If a polygon point is a split point and both closest neibhors are on the same side of the gridline
-
-function isCornerPointDirect(point, cornerPoint, pointCloud) {
-  if (!arePointsAligned(point, cornerPoint, 'vertical') && !arePointsAligned(point, cornerPoint, 'horizontal')) {
-    return false;
+function isAdjacentEndExt(minX, maxX, minY, maxY, followedPoint, point, pointCloud) {
+  //Get direction where to count cross points
+  let direction;
+  const commonCoord = getCommonCoord(followedPoint, point);
+  if (commonCoord === 1) {
+    if (followedPoint[0] > point[0]) { direction = 'left' }
+    else { direction = 'right' }
   }
-  let unsharedCoord = point[0] === cornerPoint[0] ? 1 : 0;
-  let sharedCoord = point[0] === cornerPoint[0] ? 0 : 1;
-  const type = sharedCoord === 0 ? 'vertical' : 'horizontal';
-
-  return pointCloud
-    .filter(cloudPoint => cloudPoint[0] !== point[0] && cloudPoint[1] !== point[1])
-    .filter((cloudPoint, idx) => {
-      const prevPoint = pointCloud[idx === 0 ? pointCloud.length - 1 : idx - 1]
-      const nextPoint = pointCloud[idx === pointCloud.length - 1 ? 0 : idx + 1]
-
-      return cloudPoint[sharedCoord] === point[sharedCoord] &&
-        ((cloudPoint[unsharedCoord] < cornerPoint[unsharedCoord] &&
-          cloudPoint[unsharedCoord] > point[unsharedCoord]) ||
-          (cloudPoint[unsharedCoord] > cornerPoint[unsharedCoord] &&
-            cloudPoint[unsharedCoord] < point[unsharedCoord])) &&
-        !arePointsAligned(cloudPoint, prevPoint, type) &&
-        !arePointsAligned(cloudPoint, nextPoint, type) &&
-        !isAdjacentAngle(cloudPoint, prevPoint, nextPoint, type)
-    }).length === 0
+  if (commonCoord === 0) {
+    if (followedPoint[1] > point[1]) { direction = 'bottom' }
+    else { direction = 'top' }
+  }
+  if (arePointsEqual([minX, minY], point)) {
+    if (direction === 'bottom') { direction = 'right' }
+    if (direction === 'left') { direction = 'top' }
+  }
+  if (arePointsEqual([minX, maxY], point)) {
+    if (direction === 'top') { direction = 'right' }
+    if (direction === 'left') { direction = 'bottom' }
+  }
+  if (arePointsEqual([maxX, maxY], point)) {
+    if (direction === 'top') { direction = 'left' }
+    if (direction === 'right') { direction = 'bottom' }
+  }
+  if (arePointsEqual([maxX, minY], point)) {
+    if (direction === 'bottom') { direction = 'left' }
+    if (direction === 'right') { direction = 'top' }
+  }
+  //Count points
+  const ref = getPolygonOuterPoint(point, pointCloud, direction)
+  const isExt = crossPointNb(ref, point, pointCloud) % 2 === 0;
+  return isExt;
 }
 
-function hasFollowingPoint(minX, maxX, minY, maxY, origin, pointCloud) {
-  const side = splitSquareSide2(minX, maxX, minY, maxY, origin);
+function hasFollowingPoint(minX, maxX, minY, maxY, originPoint, pointCloud) {
+  const side = splitSquareSide2(minX, maxX, minY, maxY, originPoint);
   return pointCloud.filter(point => {
     switch (side) {
       case 'left':
-        return point[0] === minX && point[1] > origin[1]
+        return point[0] === minX && point[1] > originPoint[1]
       case 'right':
-        return point[0] === maxX && point[1] < origin[1]
+        return point[0] === maxX && point[1] < originPoint[1]
       case 'bottom':
-        return point[1] === minY && point[0] < origin[0]
+        return point[1] === minY && point[0] < originPoint[0]
       case 'top':
-        return point[1] === maxY && point[0] > origin[0]
+        return point[1] === maxY && point[0] > originPoint[0]
     }
   }).length > 0
 }
 
-module.exports={
-  isSplitPoint,
+//Adds points to close a polygon which path points bounces corner inside
+function fixBunk(minX, maxX, minY, maxY, path, featurePoints) {
+  const addList = path.filter((point, idx) =>
+    idx > 0 &&
+    idx < path.length - 1 &&
+    isInCorner(minX, maxX, minY, maxY, point) &&
+    isStrictInnerCorner(minX, maxX, minY, maxY, point, flattenDoubleArray(featurePoints)) //BAD STUFF TO FLATTEN
+  )
+  return path.concat(addList.reverse())
+}
+
+module.exports = {
+  areOnSameSide,
   isOnSquareSide,
-  isAdjacentAngle,
   isInSquare,
   isStrictlyInSquare,
   splitSquareSide,
   splitSquareSide2,
-  isCornerPath,
   isInCorner,
-  followingCorner,
-  isVirtual,
   isPointStrictlyInMiddle,
   crossPointNb,
   getPolygonOuterPoint,
   isInnerCorner,
   isBouncePoint,
   isEntryPoint,
-  isStrictEntryPoint,
-  isExitPoint,
-  isStrictExitPoint,
-  getUpPointsNb,
-  getDownPointsNb,
-  getLeftPointsNb,
-  getRightPointsNb,
-  splitPointType,
-  arePointsAligned,
-  isCornerPointDirect,
+  isSimpleEntryPoint,
   hasFollowingPoint,
+  isInjectedEntryPoint,
+  isAdjacentEndExt,
+  isOnSingleSide,
+  fixBunk,
 }
