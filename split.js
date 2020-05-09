@@ -330,7 +330,7 @@ function inputAnalysis(data) {
       errorStack.enclavePolygon.push({ nbPaths: feature.geometry.coordinates.length, id: feature.properties.id })
     }
     feature.geometry.coordinates[0].map((point, idx) => {
-      feature.geometry.coordinates[0].some((point2, idx2) => {
+      feature.geometry.coordinates[0].map((point2, idx2) => {
         if (idx !== idx2 && arePointsEqual(point, point2)) {
           errorStack.multiPointPolygon.push({ point, id: feature.properties.id })
         }
