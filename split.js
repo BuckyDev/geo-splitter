@@ -190,7 +190,7 @@ function buildExcludedAdjacentPathCollection(minX, maxX, minY, maxY, coordinates
         if (path.length > 0) {
           filteredCollection.push(path)
         }
-      } else if(isOnSingleSide(path)){
+      } else if (isOnSingleSide(path)) {
         if (
           isInCorner(minX, maxX, minY, maxY, endPoint) ||
           isInjectedEntryPoint(minX, maxX, minY, maxY, endPoint, followingEndPoint)
@@ -265,16 +265,27 @@ function buildAreaSplit(newData, cornerPoints, xStart, xEnd, yStart, yEnd, gridS
   const areas = [];
   genArray(xStart, xEnd - gridSize, gridSize).map(x => {
     genArray(yStart, yEnd - gridSize, gridSize).map(y => {
-      const newFeatures = newData.features.map((feature, idx) => {
+      const newFeatures = [];
+      newData.features.map((feature, idx) => {
         const cornerPointSubset = generateCornerPointsSubset(x, x + gridSize, y, y + gridSize, cornerPoints[idx]);
         const pointSubset = generatePointSubset(x, x + gridSize, y, y + gridSize, feature.geometry.coordinates);
         const finalCoordinates = cornerPointMerger(x, x + gridSize, y, y + gridSize, pointSubset, cornerPointSubset, feature.geometry.coordinates);
-        return {
-          ...feature,
-          geometry: {
-            ...feature.geometry,
-            coordinates: finalCoordinates
-          }
+        if (finalCoordinates[0] && finalCoordinates[0].length > 0) {
+          finalCoordinates.map((polygonCoords, idx) => {
+            polygonCoords.push(polygonCoords[0]);
+            newFeatures.push({
+              ...feature,
+              properties: {
+                id: feature.properties.id,
+                area: `${x}_${y}`,
+                area_id: idx
+              },
+              geometry: {
+                ...feature.geometry,
+                coordinates: [polygonCoords]
+              }
+            })
+          })
         }
       })
       areas.push({
