@@ -1,6 +1,6 @@
 {
   "name": "geo-splitter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A package to split geoJSON data into tiles",
   "main": "index.js",
   "scripts": {
