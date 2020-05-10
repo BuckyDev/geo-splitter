@@ -276,6 +276,7 @@ function buildAreaSplit(newData, cornerPoints, xStart, xEnd, yStart, yEnd, gridS
             newFeatures.push({
               ...feature,
               properties: {
+                ...feature.properties,
                 id: feature.properties.id,
                 area: `${x}_${y}`,
                 area_id: idx
