@@ -4,6 +4,7 @@ var findPointIndex = require('./utils').findPointIndex
 var mapFrom = require('./utils').mapFrom
 var arePointsEqual = require('./utils').arePointsEqual
 var flattenDoubleArray = require('./utils').flattenDoubleArray
+var distance = require('./utils').distance
 
 function isOnSquareSide(minX, maxX, minY, maxY, point) {
   const validCoordX = [minX, maxX];
@@ -340,6 +341,37 @@ function fixBunk(minX, maxX, minY, maxY, path, featurePoints) {
   return path.concat(addList.reverse())
 }
 
+//Determine rotation direction
+function getClockwiseAngle(prevPoint,point,nextPoint){
+  const normU = distance(prevPoint,point)
+  const normV = distance(point,nextPoint)
+  const uX = point[0] - prevPoint[0];
+  const uY = point[1] - prevPoint[1];
+  const vX = nextPoint[0] - point[0];
+  const vY = nextPoint[1] - point[1];
+  const crossP = uX * vX + uY * vY;
+
+  const angle = Math.acos(crossP/(normU*normV))
+  const det = uX * vY - uY * vX;
+
+  if (det > 0){
+    return angle
+  }
+  return -angle
+}
+
+function setClockwiseRotation(path){
+  let sum = 0
+  path.map((point, idx) => {
+    const prevPoint = path[idx === 0 ? path.length - 1 : idx - 1];
+    const nextPoint = path[idx === path.length - 1 ? 0 : idx + 1];
+    sum+=getClockwiseAngle(prevPoint,point,nextPoint)
+  })
+  if(sum>0){
+    path.reverse()
+  }
+}
+
 module.exports = {
   areOnSameSide,
   isOnSquareSide,
@@ -360,4 +392,5 @@ module.exports = {
   isAdjacentEndExt,
   isOnSingleSide,
   fixBunk,
+  setClockwiseRotation,
 }

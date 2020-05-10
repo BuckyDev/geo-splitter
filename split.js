@@ -12,6 +12,7 @@ var areOnSameSide = require('./pointUtils').areOnSameSide
 var isInjectedEntryPoint = require('./pointUtils').isInjectedEntryPoint
 var isAdjacentEndExt = require('./pointUtils').isAdjacentEndExt
 var isOnSingleSide = require('./pointUtils').isOnSingleSide
+var setClockwiseRotation = require('./pointUtils').setClockwiseRotation
 
 var genArray = require('./utils').genArray
 var getSplitPoints = require('./utils').getSplitPoints
@@ -272,6 +273,7 @@ function buildAreaSplit(newData, cornerPoints, xStart, xEnd, yStart, yEnd, gridS
         const finalCoordinates = cornerPointMerger(x, x + gridSize, y, y + gridSize, pointSubset, cornerPointSubset, feature.geometry.coordinates);
         if (finalCoordinates[0] && finalCoordinates[0].length > 0) {
           finalCoordinates.map((polygonCoords, idx) => {
+            setClockwiseRotation(polygonCoords);
             polygonCoords.push(polygonCoords[0]);
             newFeatures.push({
               ...feature,
