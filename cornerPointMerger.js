@@ -19,6 +19,7 @@ var arePointsEqual = require('./utils').arePointsEqual
 var substractPoints = require('./utils').substractPoints
 var flattenDoubleArray = require('./utils').flattenDoubleArray
 
+var C = require('./consoleManager').C;
 
 function orderCornerPoints(minX, maxX, minY, maxY, cornerPointSubset) {
   const result = [];
@@ -116,7 +117,7 @@ function buildPath(start, minX, maxX, minY, maxY, pointSubset, orderedCornerPoin
 }
 
 //Functions for paths without corners
-function findDirection(point, minX, maxX, minY, maxY, featurePoints) {
+function findDirection(point, minX, maxX, minY, maxY, flattenedFeaturePoints) {
 
   const side = splitSquareSide2(minX, maxX, minY, maxY, point);
 
@@ -124,19 +125,19 @@ function findDirection(point, minX, maxX, minY, maxY, featurePoints) {
   let reference;
   switch (side) {
     case 'left':
-      reference = getPolygonOuterPoint(point, flattenDoubleArray(featurePoints), 'top');
+      reference = getPolygonOuterPoint(point, flattenedFeaturePoints, 'top');
       break;
     case 'right':
-      reference = getPolygonOuterPoint(point, flattenDoubleArray(featurePoints), 'bottom');
+      reference = getPolygonOuterPoint(point, flattenedFeaturePoints, 'bottom');
       break;
     case 'bottom':
-      reference = getPolygonOuterPoint(point, flattenDoubleArray(featurePoints), 'left');
+      reference = getPolygonOuterPoint(point, flattenedFeaturePoints, 'left');
       break;
     case 'top':
-      reference = getPolygonOuterPoint(point, flattenDoubleArray(featurePoints), 'right');
+      reference = getPolygonOuterPoint(point, flattenedFeaturePoints, 'right');
       break;
   }
-  const crossPointsCount = crossPointNb(reference, point, flattenDoubleArray(featurePoints)); //BAD STUFF TO FLATTEN
+  const crossPointsCount = crossPointNb(reference, point, flattenedFeaturePoints);
   //Return direction out of cross point count
   return crossPointsCount % 2 === 1 ? 'clockwise' : 'anticlockwise' ;
 }
@@ -221,7 +222,7 @@ function pushToPathAndReturnNextOnVirtual(newPath, closestPoint, pointSubset) {
   }
 }
 
-function buildPathOnVirtual(minX, maxX, minY, maxY, pointSubset, featurePoints) {
+function buildPathOnVirtual(minX, maxX, minY, maxY, pointSubset, flattenedFeaturePoints, featureId = null) {
   //Setting up a start point to run the path builder
   const virtualPoints = [
     [minX, minY],
@@ -234,7 +235,7 @@ function buildPathOnVirtual(minX, maxX, minY, maxY, pointSubset, featurePoints) 
   virtualPoints.map(virtualPoint => {
     if (
       !foundStartPoint &&
-      hasFollowingPoint(minX, maxX, minY, maxY, virtualPoint, flattenDoubleArray(pointSubset))
+      hasFollowingPoint(minX, maxX, minY, maxY, virtualPoint, pointSubset)
     ) {
       foundStartPoint = true
       start = virtualPoint
@@ -244,40 +245,58 @@ function buildPathOnVirtual(minX, maxX, minY, maxY, pointSubset, featurePoints) 
   let newPath = [];
   let currentPoint = start;
   let first = true
+  let securityIdx = 0;
   //Roam the path collection around the square
-  while (currentPoint) {
-    const direction = first ? 'clockwise' : findDirection(currentPoint, minX, maxX, minY, maxY, featurePoints);
+  while (currentPoint && securityIdx < 1000) {
+    const direction = first ? 'clockwise' : findDirection(currentPoint, minX, maxX, minY, maxY, flattenedFeaturePoints);
     const closestPoint = findNextPointOnVirtual(currentPoint, direction, minX, maxX, minY, maxY, pointSubset);
     first = false
-    if (closestPoint /* && !arePointsEqual(closestPoint, start) */) {
+    if (closestPoint) {
       currentPoint = pushToPathAndReturnNextOnVirtual(newPath, closestPoint, pointSubset)
+      /* if(arePointsEqual(closestPoint, start)){
+        currentPoint = null;
+      } */
     } else {
       currentPoint = null;
     }
+    securityIdx++;
+  }
+  if(securityIdx === 1000){
+    console.error(`Process got stuck in a while loop: buildPathOnVirtual(${minX}, ${maxX}, ${minY}, ${maxY}, ...)`)
   }
   return newPath;
 }
 
-function cornerPointMerger(minX, maxX, minY, maxY, pointSubset, cornerPointSubset, featurePoints) {
+function cornerPointMerger(minX, maxX, minY, maxY, pointSubset, cornerPointSubset, featurePoints, featureId = null) {
+  //Error copies
+  const errorPointSubset = [...pointSubset];
+  const errorCornerPointSubset = [...cornerPointSubset];
   //Early returns
   if (pointSubset.length === 0 && cornerPointSubset.length === 0) return pointSubset; //Empty area
-
   const newSubset = []
   const orderedCornerPoints = orderCornerPoints(minX, maxX, minY, maxY, cornerPointSubset);
+  const flattenedFeaturePoints = flattenDoubleArray(featurePoints); //COULD BE A BAD STUFF TO FLATTEN
 
   //If there's corner points, bind all related polygons until there's no unused corner point left
   if (orderedCornerPoints.length > 0) {
-    while (orderedCornerPoints.length > 0) {
+    let securityIdx = 0;
+    while (orderedCornerPoints.length > 0 && securityIdx < 1000) {
       const start = orderedCornerPoints.pop();
       const newPath = buildPath(start, minX, maxX, minY, maxY, pointSubset, orderedCornerPoints);
-      newSubset.push(newPath)
+      newSubset.push(newPath);
+      securityIdx++;
+      if(featureId === '112-E'){debugger}
+    }
+    if(securityIdx === 1000){
+      console.error(`Process got stuck in a while loop: cornerPointMerger(${minX}, ${maxX}, ${minY}, ${maxY}, ...) with existing corner points`)
+      C.pushErrorStack('merger','infiniteWhileCorner', {minX, maxX, minY, maxY, errorPointSubset, errorCornerPointSubset}, {minX, minY, gridSize: Math.abs(maxX-minX), featureId})
     }
   }
   if (pointSubset.length === 0 && orderedCornerPoints.length === 0) return newSubset;
 
   //Handles single path exclusive polygon => it can only close on itself so it can be added directly
   if (pointSubset.length === 1 && orderedCornerPoints.length === 0) {
-    newSubset.push(fixBunk(minX, maxX, minY, maxY, pointSubset[0], featurePoints));
+    newSubset.push(fixBunk(minX, maxX, minY, maxY, pointSubset[0], flattenedFeaturePoints));
     return newSubset;
   }
 
@@ -299,9 +318,16 @@ function cornerPointMerger(minX, maxX, minY, maxY, pointSubset, cornerPointSubse
 
   //Handles multiple path exclusive polygons
   if (pointSubset.length > 0 && orderedCornerPoints.length === 0) {
-    while (pointSubset.length > 0) {
-      const newPath = buildPathOnVirtual(minX, maxX, minY, maxY, pointSubset, featurePoints);
-      newSubset.push(fixBunk(minX, maxX, minY, maxY, newPath, featurePoints))
+    let securityIdx = 0;
+
+    while (pointSubset.length > 0 && securityIdx < 1000) {
+      const newPath = buildPathOnVirtual(minX, maxX, minY, maxY, pointSubset, flattenedFeaturePoints, featureId);
+      newSubset.push(fixBunk(minX, maxX, minY, maxY, newPath, flattenedFeaturePoints));
+      securityIdx++;
+    }
+    if(securityIdx === 1000){
+      console.error(`Process got stuck in a while loop: cornerPointMerger(${minX}, ${maxX}, ${minY}, ${maxY}, ...) with no corner points`)
+      C.pushErrorStack('merger','infiniteWhileNoCorner', {minX, maxX, minY, maxY, errorPointSubset, errorCornerPointSubset}, {minX, minY, gridSize: Math.abs(maxX-minX), featureId})
     }
   }
   return newSubset;

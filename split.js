@@ -22,6 +22,9 @@ var includeArr = require('./utils').includeArr
 var arePointsEqual = require('./utils').arePointsEqual
 var flattenDoubleArray = require('./utils').flattenDoubleArray
 
+var C = require('./consoleManager').C;
+var RUN_STATE = require('./consoleManager').RUN_STATE;
+
 //Add all missing crossborder points for a polygon
 function addSplitPointFeature(coordinates, gridSize) {
   const updatedCoordinates = [];
@@ -46,8 +49,10 @@ function addSplitPointFeature(coordinates, gridSize) {
 }
 
 function addSplitPointsAll(data, gridSize) {
-  return data.features.map(feature => {
+  C.splitPoints = RUN_STATE.RUNNING;
+  return data.features.map((feature, idx) => {
     const enrichedCoordinates = addSplitPointFeature(feature.geometry.coordinates, gridSize);
+    C.updateRun(idx, data.features.length);
     return {
       ...feature,
       geometry: {
@@ -62,16 +67,16 @@ function addSplitPointsAll(data, gridSize) {
 function isPointInside(testPoint, feature) {
   const featurePoints = feature.geometry.coordinates;
   return featurePoints.map(polygonPoints => {
-    const topRef = getPolygonOuterPoint(testPoint, polygonPoints, 'top');
-    const bottomRef = getPolygonOuterPoint(testPoint, polygonPoints, 'bottom');
+    //Only one ref should be enough but two is more reliable (longitude splitting)
     const leftRef = getPolygonOuterPoint(testPoint, polygonPoints, 'left');
-    const rightRef = getPolygonOuterPoint(testPoint, polygonPoints, 'right');
-
-    const isInTop = crossPointNb(testPoint, topRef, polygonPoints) % 2 === 1;
-    const isInBottom = crossPointNb(testPoint, bottomRef, polygonPoints) % 2 === 1;
     const isInLeft = crossPointNb(testPoint, leftRef, polygonPoints) % 2 === 1;
-    const isInRight = crossPointNb(testPoint, rightRef, polygonPoints) % 2 === 1;
-    return isInTop && isInBottom && isInLeft && isInRight;
+    if (!isInLeft) { return false };
+
+    const bottomRef = getPolygonOuterPoint(testPoint, polygonPoints, 'bottom');
+    const isInBottom = crossPointNb(testPoint, bottomRef, polygonPoints) % 2 === 1;
+    if (!isInBottom) { return false };
+
+    return true;
   }).includes(true);
 }
 
@@ -83,12 +88,14 @@ function generateCornerPoints(data, xStart, xEnd, yStart, yEnd, gridSize) {
     })
   })
 
-  return data.features.map(feature => {
+  C.cornerPoints = RUN_STATE.RUNNING;
+  return data.features.map((feature, idx) => {
     const featurePoints = flattenDoubleArray(feature.geometry.coordinates);
-    const result = pointsToTest.filter(point => (
+    const result = pointsToTest.filter(point =>
       isPointInside(point, feature) &&
       !includeArr(featurePoints, point)
-    ))
+    )
+    C.updateRun(idx, data.features.length);
     return result
   }
   )
@@ -264,13 +271,15 @@ function generateCornerPointsSubset(minX, maxX, minY, maxY, cornerPoints) {
 
 function buildAreaSplit(newData, cornerPoints, xStart, xEnd, yStart, yEnd, gridSize) {
   const areas = [];
-  genArray(xStart, xEnd - gridSize, gridSize).map(x => {
-    genArray(yStart, yEnd - gridSize, gridSize).map(y => {
+  const areasNb = Math.floor((xEnd - xStart) * (yEnd - yStart) / (gridSize * gridSize))
+  C.merger = RUN_STATE.RUNNING;
+  genArray(xStart, xEnd - gridSize, gridSize).map((x, xIdx) => {
+    genArray(yStart, yEnd - gridSize, gridSize).map((y, yIdx) => {
       const newFeatures = [];
       newData.features.map((feature, idx) => {
         const cornerPointSubset = generateCornerPointsSubset(x, x + gridSize, y, y + gridSize, cornerPoints[idx]);
         const pointSubset = generatePointSubset(x, x + gridSize, y, y + gridSize, feature.geometry.coordinates);
-        const finalCoordinates = cornerPointMerger(x, x + gridSize, y, y + gridSize, pointSubset, cornerPointSubset, feature.geometry.coordinates);
+        const finalCoordinates = cornerPointMerger(x, x + gridSize, y, y + gridSize, pointSubset, cornerPointSubset, feature.geometry.coordinates, feature.properties.id);
         if (finalCoordinates[0] && finalCoordinates[0].length > 0) {
           finalCoordinates.map((polygonCoords, idx) => {
             setClockwiseRotation(polygonCoords);
@@ -294,6 +303,7 @@ function buildAreaSplit(newData, cornerPoints, xStart, xEnd, yStart, yEnd, gridS
         ...newData,
         features: newFeatures
       })
+      C.updateRun(yIdx + xIdx * ((yEnd - yStart) / gridSize), areasNb);
     })
   })
   return areas;
@@ -318,13 +328,14 @@ const errors = {
 }
 
 function inputAnalysis(data) {
-  console.log(`Data analysis started`)
   const errorStack = {
     nonPolygon: [],
     enclavePolygon: [],
     multiPointPolygon: [],
   }
-  data.features.map(feature => {
+  C.analysis = RUN_STATE.RUNNING;
+
+  data.features.map((feature, idx) => {
     if (feature.geometry.type !== 'Polygon') {
       errorStack.nonPolygon.push({ type: feature.geometry.type, id: feature.properties.id })
     }
@@ -338,6 +349,7 @@ function inputAnalysis(data) {
         }
       })
     })
+    C.updateRun(idx, data.features.length);
   })
 
   if (Object.keys(errorStack).some(type => errorStack[type].length > 0)) {
@@ -382,18 +394,44 @@ function inputAnalysis(data) {
 //Final function
 function split(data, xStart, xEnd, yStart, yEnd, gridSize, bypassAnalysis = false) {
   formatInput(data);
+  C.logState();
+  if(bypassAnalysis){
+    C.analysis = RUN_STATE.BYPASSED;
+    C.logState();
+  } else {
+    C.analysis = RUN_STATE.STARTED;
+    C.logState();
+  }
   const isDataOk = bypassAnalysis || inputAnalysis(data);
   if (!isDataOk) {
     console.log('Aborting conversion ...')
     return null;
   }
+  
+  C.splitPoints = RUN_STATE.STARTED;
+  C.logState();
   const splitPointsData = addSplitPointsAll(data, gridSize);
   const newData = {
     ...data,
     features: splitPointsData,
   }
+  C.splitPoints = RUN_STATE.SUCCEEDED;
+  C.logState();
+  C.cornerPoints = RUN_STATE.STARTED;
+  C.logState();
   const intersectionPoints = generateCornerPoints(newData, xStart, xEnd, yStart, yEnd, gridSize);
+  C.cornerPoints = RUN_STATE.SUCCEEDED;
+  C.logState();
+
+  C.merger = RUN_STATE.STARTED;
+  C.logState();
   const splittedData = buildAreaSplit(newData, intersectionPoints, xStart, xEnd, yStart, yEnd, gridSize);
+  C.merger = RUN_STATE.SUCCEEDED;
+  C.logState();
+
+  C.conversionEnded = true;
+  C.logState();
+
   return splittedData;
 }
 

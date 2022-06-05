@@ -314,9 +314,17 @@ function isAdjacentEndExt(minX, maxX, minY, maxY, followedPoint, point, pointClo
   return isExt;
 }
 
-function hasFollowingPoint(minX, maxX, minY, maxY, originPoint, pointCloud) {
+function hasFollowingPoint(minX, maxX, minY, maxY, originPoint, pointSubset) {
   const side = splitSquareSide2(minX, maxX, minY, maxY, originPoint);
-  return pointCloud.filter(point => {
+  return flattenDoubleArray(pointSubset
+    .map(path => {
+      if (path.length === 1) {
+        return path[0];
+      } else if (path.length > 1) {
+        return [path[0], path[path.length - 1]];
+      }
+    })
+  ).filter(point => {
     switch (side) {
       case 'left':
         return point[0] === minX && point[1] > originPoint[1]
@@ -331,43 +339,43 @@ function hasFollowingPoint(minX, maxX, minY, maxY, originPoint, pointCloud) {
 }
 
 //Adds points to close a polygon which path points bounces corner inside
-function fixBunk(minX, maxX, minY, maxY, path, featurePoints) {
+function fixBunk(minX, maxX, minY, maxY, path, flattenedFeaturePoints) {
   const addList = path.filter((point, idx) =>
     idx > 0 &&
     idx < path.length - 1 &&
     isInCorner(minX, maxX, minY, maxY, point) &&
-    isStrictInnerCorner(minX, maxX, minY, maxY, point, flattenDoubleArray(featurePoints)) //BAD STUFF TO FLATTEN
+    isStrictInnerCorner(minX, maxX, minY, maxY, point, flattenedFeaturePoints) //BAD STUFF TO FLATTEN
   )
   return path.concat(addList.reverse())
 }
 
 //Determine rotation direction
-function getClockwiseAngle(prevPoint,point,nextPoint){
-  const normU = distance(prevPoint,point)
-  const normV = distance(point,nextPoint)
+function getClockwiseAngle(prevPoint, point, nextPoint) {
+  const normU = distance(prevPoint, point)
+  const normV = distance(point, nextPoint)
   const uX = point[0] - prevPoint[0];
   const uY = point[1] - prevPoint[1];
   const vX = nextPoint[0] - point[0];
   const vY = nextPoint[1] - point[1];
   const crossP = uX * vX + uY * vY;
 
-  const angle = Math.acos(crossP/(normU*normV))
+  const angle = Math.acos(crossP / (normU * normV))
   const det = uX * vY - uY * vX;
 
-  if (det > 0){
+  if (det > 0) {
     return angle
   }
   return -angle
 }
 
-function setClockwiseRotation(path){
+function setClockwiseRotation(path) {
   let sum = 0
   path.map((point, idx) => {
     const prevPoint = path[idx === 0 ? path.length - 1 : idx - 1];
     const nextPoint = path[idx === path.length - 1 ? 0 : idx + 1];
-    sum+=getClockwiseAngle(prevPoint,point,nextPoint)
+    sum += getClockwiseAngle(prevPoint, point, nextPoint)
   })
-  if(sum>0){
+  if (sum > 0) {
     path.reverse()
   }
 }
