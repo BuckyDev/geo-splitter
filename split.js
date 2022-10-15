@@ -1,7 +1,5 @@
 var cornerPointMerger = require('./cornerPointMerger').cornerPointMerger
 
-var crossPointNb = require('./pointUtils').crossPointNb
-var getPolygonOuterPoint = require('./pointUtils').getPolygonOuterPoint
 var isSimpleEntryPoint = require('./pointUtils').isSimpleEntryPoint
 var isInSquare = require('./pointUtils').isInSquare
 var isOnSquareSide = require('./pointUtils').isOnSquareSide
@@ -15,84 +13,17 @@ var isOnSingleSide = require('./pointUtils').isOnSingleSide
 var setClockwiseRotation = require('./pointUtils').setClockwiseRotation
 
 var genArray = require('./utils').genArray
-var getSplitPoints = require('./utils').getSplitPoints
-var pushArray = require('./utils').pushArray
 var mapFrom = require('./utils').mapFrom
 var includeArr = require('./utils').includeArr
 var arePointsEqual = require('./utils').arePointsEqual
 var flattenDoubleArray = require('./utils').flattenDoubleArray
 
-//Add all missing crossborder points for a polygon
-function addSplitPointFeature(coordinates, gridSize) {
-  const updatedCoordinates = [];
-  coordinates.map(coordinate => {
-    const result = [];
-    coordinate.map((coord1, idx) => {
-      if (
-        idx === coordinate.length - 1 &&
-        coordinate[idx] === coordinate[0]
-      ) {
-        return null;
-      }
-      const coord2 = coordinate[idx + 1] || coordinate[0];
-      const extraPoints = getSplitPoints([coord1, coord2], gridSize);
+var addSplitPointsAll = require('./addSplitPoints').addSplitPointsAll
+var generateCornerPoints = require('./generateCornerPoints').generateCornerPoints
+var inputAnalysis = require('./inputAnalysis').inputAnalysis
 
-      result.push(coord1)
-      pushArray(result, extraPoints)
-    })
-    updatedCoordinates.push(result)
-  })
-  return updatedCoordinates;
-}
-
-function addSplitPointsAll(data, gridSize) {
-  return data.features.map(feature => {
-    const enrichedCoordinates = addSplitPointFeature(feature.geometry.coordinates, gridSize);
-    return {
-      ...feature,
-      geometry: {
-        ...feature.geometry,
-        coordinates: enrichedCoordinates
-      }
-    }
-  })
-}
-
-//Generate a collection of points located at an intersection and inside the polygon
-function isPointInside(testPoint, feature) {
-  const featurePoints = feature.geometry.coordinates;
-  return featurePoints.map(polygonPoints => {
-    const topRef = getPolygonOuterPoint(testPoint, polygonPoints, 'top');
-    const bottomRef = getPolygonOuterPoint(testPoint, polygonPoints, 'bottom');
-    const leftRef = getPolygonOuterPoint(testPoint, polygonPoints, 'left');
-    const rightRef = getPolygonOuterPoint(testPoint, polygonPoints, 'right');
-
-    const isInTop = crossPointNb(testPoint, topRef, polygonPoints) % 2 === 1;
-    const isInBottom = crossPointNb(testPoint, bottomRef, polygonPoints) % 2 === 1;
-    const isInLeft = crossPointNb(testPoint, leftRef, polygonPoints) % 2 === 1;
-    const isInRight = crossPointNb(testPoint, rightRef, polygonPoints) % 2 === 1;
-    return isInTop && isInBottom && isInLeft && isInRight;
-  }).includes(true);
-}
-
-function generateCornerPoints(data, xStart, xEnd, yStart, yEnd, gridSize) {
-  const pointsToTest = []
-  genArray(xStart, xEnd, gridSize).map(x => {
-    genArray(yStart, yEnd, gridSize).map(y => {
-      pointsToTest.push([x, y])
-    })
-  })
-
-  return data.features.map(feature => {
-    const featurePoints = flattenDoubleArray(feature.geometry.coordinates);
-    const result = pointsToTest.filter(point => (
-      isPointInside(point, feature) &&
-      !includeArr(featurePoints, point)
-    ))
-    return result
-  }
-  )
-}
+var C = require('./consoleManager').C;
+var RUN_STATE = require('./consoleManager').RUN_STATE;
 
 //Generate the subset for a square area
 function buildExcludedAdjacentPathCollection(minX, maxX, minY, maxY, coordinates) {
@@ -264,13 +195,15 @@ function generateCornerPointsSubset(minX, maxX, minY, maxY, cornerPoints) {
 
 function buildAreaSplit(newData, cornerPoints, xStart, xEnd, yStart, yEnd, gridSize) {
   const areas = [];
-  genArray(xStart, xEnd - gridSize, gridSize).map(x => {
-    genArray(yStart, yEnd - gridSize, gridSize).map(y => {
+  const areasNb = Math.floor((xEnd - xStart) * (yEnd - yStart) / (gridSize * gridSize))
+  C.merger = RUN_STATE.RUNNING;
+  genArray(xStart, xEnd - gridSize, gridSize).map((x, xIdx) => {
+    genArray(yStart, yEnd - gridSize, gridSize).map((y, yIdx) => {
       const newFeatures = [];
       newData.features.map((feature, idx) => {
         const cornerPointSubset = generateCornerPointsSubset(x, x + gridSize, y, y + gridSize, cornerPoints[idx]);
         const pointSubset = generatePointSubset(x, x + gridSize, y, y + gridSize, feature.geometry.coordinates);
-        const finalCoordinates = cornerPointMerger(x, x + gridSize, y, y + gridSize, pointSubset, cornerPointSubset, feature.geometry.coordinates);
+        const finalCoordinates = cornerPointMerger(x, x + gridSize, y, y + gridSize, pointSubset, cornerPointSubset, feature.geometry.coordinates, feature.properties.id);
         if (finalCoordinates[0] && finalCoordinates[0].length > 0) {
           finalCoordinates.map((polygonCoords, idx) => {
             setClockwiseRotation(polygonCoords);
@@ -294,6 +227,7 @@ function buildAreaSplit(newData, cornerPoints, xStart, xEnd, yStart, yEnd, gridS
         ...newData,
         features: newFeatures
       })
+      C.updateRun(yIdx + xIdx * ((yEnd - yStart) / gridSize), areasNb);
     })
   })
   return areas;
@@ -310,90 +244,47 @@ function formatInput(data) {
   })
 }
 
-//Pitfalls detection
-const errors = {
-  nonPolygon: "Split cannot convert non Polygon features yet !",
-  enclavePolygon: "Split cannot convert Polygon features with enclaves yet !",
-  multiPointPolygon: "Split cannot convert Polygon features that includes same point several time yet!",
-}
-
-function inputAnalysis(data) {
-  console.log(`Data analysis started`)
-  const errorStack = {
-    nonPolygon: [],
-    enclavePolygon: [],
-    multiPointPolygon: [],
-  }
-  data.features.map(feature => {
-    if (feature.geometry.type !== 'Polygon') {
-      errorStack.nonPolygon.push({ type: feature.geometry.type, id: feature.properties.id })
-    }
-    if (feature.geometry.coordinates.length > 1) {
-      errorStack.enclavePolygon.push({ nbPaths: feature.geometry.coordinates.length, id: feature.properties.id })
-    }
-    feature.geometry.coordinates[0].map((point, idx) => {
-      feature.geometry.coordinates[0].map((point2, idx2) => {
-        if (idx !== idx2 && arePointsEqual(point, point2)) {
-          errorStack.multiPointPolygon.push({ point, id: feature.properties.id })
-        }
-      })
-    })
-  })
-
-  if (Object.keys(errorStack).some(type => errorStack[type].length > 0)) {
-    console.log('Pre-conversion analysis found non-supported configs in input data')
-    if (errorStack.nonPolygon.length > 0) {
-      console.log(errors.nonPolygon);
-      console.log(`Analysis found ${errorStack.nonPolygon.length} non polygon features:`)
-      errorStack.nonPolygon.map(err => {
-        console.log(`Feature of id ${err.id} is a ${err.type}`)
-      })
-    }
-    if (errorStack.enclavePolygon.length > 0) {
-      console.log(errors.enclavePolygon);
-      console.log(`Analysis found ${errorStack.enclavePolygon.length} enclave polygon features:`)
-      errorStack.enclavePolygon.map(err => {
-        console.log(`Feature of id ${err.id} has ${err.nbPaths} paths`)
-      })
-    }
-
-    if (errorStack.multiPointPolygon.length > 0) {
-      console.log(errors.multiPointPolygon);
-      console.log(`Analysis found ${errorStack.multiPointPolygon.length} multipoints in several features:`)
-      const reducedStack = {}
-      errorStack.enclavePolygon.map(err => {
-        if (!reducedStack[err.id]) {
-          reducedStack[err.id] = [err.point];
-        } else {
-          reducedStack[err.id].push(err.point);
-        }
-      })
-      Object.keys(reducedStack).map(id => {
-        console.log(`Feature of id ${id} has ${reducedStack[id].length} points repeated in polygon : ${reducedStack[id]}`)
-      })
-    }
-    return false
-  } else {
-    console.log('Pre-conversion analysis ran with success')
-    return true;
-  }
-}
-
 //Final function
 function split(data, xStart, xEnd, yStart, yEnd, gridSize, bypassAnalysis = false) {
   formatInput(data);
+  C.logState();
+  if(bypassAnalysis){
+    C.analysis = RUN_STATE.BYPASSED;
+    C.logState();
+  } else {
+    C.analysis = RUN_STATE.STARTED;
+    C.logState();
+  }
   const isDataOk = bypassAnalysis || inputAnalysis(data);
   if (!isDataOk) {
     console.log('Aborting conversion ...')
     return null;
   }
+
+  C.splitPoints = RUN_STATE.STARTED;
+  C.logState();
   const splitPointsData = addSplitPointsAll(data, gridSize);
   const newData = {
     ...data,
     features: splitPointsData,
   }
+  C.splitPoints = RUN_STATE.SUCCEEDED;
+  C.logState();
+  C.cornerPoints = RUN_STATE.STARTED;
+  C.logState();
   const intersectionPoints = generateCornerPoints(newData, xStart, xEnd, yStart, yEnd, gridSize);
+  C.cornerPoints = RUN_STATE.SUCCEEDED;
+  C.logState();
+
+  C.merger = RUN_STATE.STARTED;
+  C.logState();
   const splittedData = buildAreaSplit(newData, intersectionPoints, xStart, xEnd, yStart, yEnd, gridSize);
+  C.merger = RUN_STATE.SUCCEEDED;
+  C.logState();
+
+  C.conversionEnded = true;
+  C.logState();
+
   return splittedData;
 }
 
