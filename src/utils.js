@@ -1,4 +1,5 @@
 const { GRID_POINT_TYPES } = require("./constants/gridPointTypes");
+const { getGridPointType } = require("./utils/pointTypes/gridPoint");
 
 function max(pointArray, coord) {
   let max;
@@ -157,25 +158,6 @@ function getSplitPoints(segment, gridSize) {
   return sortedPoints;
 }
 
-/**
- * @param {*} point1
- * @param {*} point2
- * @param {*} point3
- * @returns boolean
- * Returns whether those three points are aligned
- */
-function arePointsAligned(point1, point2, point3) {
-  if (point3[0] === point1[0]) {
-    return point2[0] === point1[0];
-  }
-
-  const largeSlope = (point3[1] - point1[1]) / (point3[0] - point1[0]);
-  const smallSlope = (point2[1] - point1[1]) / (point2[0] - point1[0]);
-
-  // We need to add some tolerance to consider results equal
-  return Math.abs(largeSlope - smallSlope) < 0.02;
-}
-
 /* WARNING: The following utils have been intended to work on data that was already split
  */
 
@@ -201,182 +183,6 @@ function rotateArray(originalArray, newStartIndex) {
  */
 function isPointInList(point, pointList) {
   return pointList.some((pointOfList) => arePointsEqual(pointOfList, point));
-}
-
-/**
- *
- * @param {*} idx
- * @param {*} pointList
- * @returns point
- * Returns the next point of the path given that the path is condired cyclic
- */
-function getNextPointByIdx(idx, pointList) {
-  return pointList[idx + 1 === pointList.length ? 0 : idx + 1];
-}
-
-/**
- *
- * @param {*} idx
- * @param {*} pointList
- * @returns point
- * Returns the previous point of the path given that the path is condired cyclic
- */
-function getPreviousPointByIdx(idx, pointList) {
-  return pointList[idx - 1 >= 0 ? idx - 1 : pointList.length - 1];
-}
-
-/**
- * @param {*} point
- * @param {*} gridSize
- * @returns boolean
- * Returns whether the point is a grid point (see grid point definition in README)
- */
-function isGridPoint(point, gridSize) {
-  return point[0] % gridSize === 0 || point[1] % gridSize === 0;
-}
-
-/**
- * @param {*} point
- * @param {*} gridSize
- * @returns any of GRID_POINT_TYPES
- * Returns whether the type of grid point, depending one type of gridline(s) it is on
- */
-function getGridPointType(point, gridSize) {
-  const isPointOnVerticalGridLine = point[0] % gridSize === 0;
-  const isPointOnHorizontalGridLine = point[1] % gridSize === 0;
-
-  if (isPointOnVerticalGridLine && !isPointOnHorizontalGridLine) {
-    return GRID_POINT_TYPES.VERTICAL;
-  }
-
-  if (!isPointOnVerticalGridLine && isPointOnHorizontalGridLine) {
-    return GRID_POINT_TYPES.HORIZONTAL;
-  }
-
-  if (isPointOnVerticalGridLine && isPointOnHorizontalGridLine) {
-    return GRID_POINT_TYPES.BOTH;
-  }
-
-  if (!isPointOnVerticalGridLine && !isPointOnHorizontalGridLine) {
-    return GRID_POINT_TYPES.NONE;
-  }
-}
-
-/**
- * @param {*} idx
- * @param {*} pointList
- * @param {*} gridSize
- * @returns boolean
- * Returns whether the point pointList[idx] is an interface point (see interface point definition in README)
- */
-function isInterfacePointByIdx(idx, pointList, gridSize) {
-  const gridPointType = getGridPointType(pointList[idx], gridSize);
-  if (gridPointType === GRID_POINT_TYPES.NONE) {
-    return false;
-  }
-
-  const currentPoint = pointList[idx];
-  const previousPoint = getPreviousPointByIdx(idx, pointList);
-  const nextPoint = getNextPointByIdx(idx, pointList);
-
-  // Checks if the coordinates are on different sides of the gridline depending on the gridPointType
-  switch (gridPointType) {
-    case GRID_POINT_TYPES.VERTICAL:
-      return (
-        previousPoint[0] !== currentPoint[0] &&
-        nextPoint[0] !== currentPoint[0] &&
-        Math.floor(previousPoint[0] / gridSize) !==
-          Math.floor(nextPoint[0] / gridSize)
-      );
-    case GRID_POINT_TYPES.HORIZONTAL:
-      return (
-        previousPoint[1] !== currentPoint[1] &&
-        nextPoint[1] !== currentPoint[1] &&
-        Math.floor(previousPoint[1] / gridSize) !==
-          Math.floor(nextPoint[1] / gridSize)
-      );
-    case GRID_POINT_TYPES.BOTH:
-      return (
-        (previousPoint[0] !== currentPoint[0] &&
-          previousPoint[1] !== currentPoint[1] &&
-          nextPoint[0] !== currentPoint[0] &&
-          nextPoint[1] !== currentPoint[1] &&
-          Math.floor(previousPoint[0] / gridSize) !==
-            Math.floor(nextPoint[0] / gridSize)) ||
-        Math.floor(previousPoint[1] / gridSize) !==
-          Math.floor(nextPoint[1] / gridSize)
-      );
-    default:
-      return false;
-  }
-}
-
-/**
- * @param {*} idx
- * @param {*} pointList
- * @param {*} gridSize
- * @returns boolean
- * Returns whether the point pointList[idx] is a split point (see split point definition in README)
- */
-function isSplitPointByIdx(idx, pointList, gridSize) {
-  if (!isInterfacePointByIdx(idx, pointList, gridSize)) {
-    return false;
-  }
-
-  // Checks if the point is on the line prev-next
-  const currentPoint = pointList[idx];
-  const previousPoint = getPreviousPointByIdx(idx, pointList);
-  const nextPoint = getNextPointByIdx(idx, pointList);
-  return arePointsAligned(previousPoint, currentPoint, nextPoint);
-}
-
-/**
- * @param {*} idx
- * @param {*} pointList
- * @param {*} gridSize
- * @returns boolean
- * Returns whether the point pointList[idx] is a bounce point (see bounce point definition in README)
- */
-function isBouncePointByIdx(idx, pointList, gridSize) {
-  const gridPointType = getGridPointType(pointList[idx], gridSize);
-  if (gridPointType === GRID_POINT_TYPES.NONE) {
-    return false;
-  }
-
-  const currentPoint = pointList[idx];
-  const previousPoint = getPreviousPointByIdx(idx, pointList);
-  const nextPoint = getNextPointByIdx(idx, pointList);
-
-  // Checks if the coordinates are on same sides of the gridline depending on the gridPointType
-  switch (gridPointType) {
-    case GRID_POINT_TYPES.VERTICAL:
-      return (
-        previousPoint[0] !== currentPoint[0] &&
-        nextPoint[0] !== currentPoint[0] &&
-        Math.floor(previousPoint[0] / gridSize) ===
-          Math.floor(nextPoint[0] / gridSize)
-      );
-    case GRID_POINT_TYPES.HORIZONTAL:
-      return (
-        previousPoint[1] !== currentPoint[1] &&
-        nextPoint[1] !== currentPoint[1] &&
-        Math.floor(previousPoint[1] / gridSize) ===
-          Math.floor(nextPoint[1] / gridSize)
-      );
-    case GRID_POINT_TYPES.BOTH:
-      return (
-        previousPoint[0] !== currentPoint[0] &&
-        previousPoint[1] !== currentPoint[1] &&
-        nextPoint[0] !== currentPoint[0] &&
-        nextPoint[1] !== currentPoint[1] &&
-        Math.floor(previousPoint[0] / gridSize) ===
-          Math.floor(nextPoint[0] / gridSize) &&
-        Math.floor(previousPoint[1] / gridSize) ===
-          Math.floor(nextPoint[1] / gridSize)
-      );
-    default:
-      return false;
-  }
 }
 
 /**
@@ -409,15 +215,7 @@ module.exports = {
   distance,
   includeArr,
   getSplitPoints,
-  isGridPoint,
-  isSplitPointByIdx,
   rotateArray,
   isPointInList,
-  getNextPointByIdx,
-  getPreviousPointByIdx,
-  getGridPointType,
-  isBouncePointByIdx,
   doesSegmentCoverTile,
-  arePointsAligned,
-  isInterfacePointByIdx,
 };

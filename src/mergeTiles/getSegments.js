@@ -1,12 +1,14 @@
 const { GRID_POINT_TYPES } = require("../constants/gridPointTypes");
+const { rotateArray, isPointInList } = require("../utils");
+const {
+  getNextPointByIdx,
+} = require("../utils/pointArrangement/getPointFromList");
+const { isBouncePointByIdx } = require("../utils/pointTypes/bouncePoint");
+
 const {
   getGridPointType,
-  getNextPointByIdx,
   isGridPoint,
-  rotateArray,
-  isPointInList,
-  isBouncePointByIdx,
-} = require("../utils");
+} = require("../utils/pointTypes/gridPoint");
 
 /**
  * 

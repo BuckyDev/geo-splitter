@@ -1,6 +1,6 @@
-const assembleSegments = require("./mergeTilesUtils/assembleSegments");
-const getInnerPoints = require("./mergeTilesUtils/getInnerPoints");
-const getSegments = require("./mergeTilesUtils/getSegments");
+const assembleSegments = require("./mergeTiles/assembleSegments");
+const getInnerPoints = require("./mergeTiles/getInnerPoints");
+const getSegments = require("./mergeTiles/getSegments");
 const { doesSegmentCoverTile } = require("./utils");
 
 /**
