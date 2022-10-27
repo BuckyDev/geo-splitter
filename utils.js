@@ -157,6 +157,25 @@ function getSplitPoints(segment, gridSize) {
   return sortedPoints;
 }
 
+/**
+ * @param {*} point1
+ * @param {*} point2
+ * @param {*} point3
+ * @returns boolean
+ * Returns whether those three points are aligned
+ */
+function arePointsAligned(point1, point2, point3) {
+  if (point3[0] === point1[0]) {
+    return point2[0] === point1[0];
+  }
+
+  const largeSlope = (point3[1] - point1[1]) / (point3[0] - point1[0]);
+  const smallSlope = (point2[1] - point1[1]) / (point2[0] - point1[0]);
+
+  // We need to add some tolerance to consider results equal
+  return Math.abs(largeSlope - smallSlope) < 0.02;
+}
+
 /* WARNING: The following utils have been intended to work on data that was already split
  */
 
@@ -248,14 +267,15 @@ function getGridPointType(point, gridSize) {
  * @param {*} pointList
  * @param {*} gridSize
  * @returns boolean
- * Returns whether the point pointList[idx] is a split point (see split point definition in README)
+ * Returns whether the point pointList[idx] is an interface point (see interface point definition in README)
  */
-function isSplitPointByIdx(idx, pointList, gridSize) {
+function isInterfacePointByIdx(idx, pointList, gridSize) {
   const gridPointType = getGridPointType(pointList[idx], gridSize);
   if (gridPointType === GRID_POINT_TYPES.NONE) {
     return false;
   }
 
+  const currentPoint = pointList[idx];
   const previousPoint = getPreviousPointByIdx(idx, pointList);
   const nextPoint = getNextPointByIdx(idx, pointList);
 
@@ -263,24 +283,51 @@ function isSplitPointByIdx(idx, pointList, gridSize) {
   switch (gridPointType) {
     case GRID_POINT_TYPES.VERTICAL:
       return (
+        previousPoint[0] !== currentPoint[0] &&
+        nextPoint[0] !== currentPoint[0] &&
         Math.floor(previousPoint[0] / gridSize) !==
-        Math.floor(nextPoint[0] / gridSize)
+          Math.floor(nextPoint[0] / gridSize)
       );
     case GRID_POINT_TYPES.HORIZONTAL:
       return (
+        previousPoint[1] !== currentPoint[1] &&
+        nextPoint[1] !== currentPoint[1] &&
         Math.floor(previousPoint[1] / gridSize) !==
-        Math.floor(nextPoint[1] / gridSize)
+          Math.floor(nextPoint[1] / gridSize)
       );
     case GRID_POINT_TYPES.BOTH:
       return (
-        Math.floor(previousPoint[0] / gridSize) !==
-          Math.floor(nextPoint[0] / gridSize) ||
+        (previousPoint[0] !== currentPoint[0] &&
+          previousPoint[1] !== currentPoint[1] &&
+          nextPoint[0] !== currentPoint[0] &&
+          nextPoint[1] !== currentPoint[1] &&
+          Math.floor(previousPoint[0] / gridSize) !==
+            Math.floor(nextPoint[0] / gridSize)) ||
         Math.floor(previousPoint[1] / gridSize) !==
           Math.floor(nextPoint[1] / gridSize)
       );
     default:
       return false;
   }
+}
+
+/**
+ * @param {*} idx
+ * @param {*} pointList
+ * @param {*} gridSize
+ * @returns boolean
+ * Returns whether the point pointList[idx] is a split point (see split point definition in README)
+ */
+function isSplitPointByIdx(idx, pointList, gridSize) {
+  if (!isInterfacePointByIdx(idx, pointList, gridSize)) {
+    return false;
+  }
+
+  // Checks if the point is on the line prev-next
+  const currentPoint = pointList[idx];
+  const previousPoint = getPreviousPointByIdx(idx, pointList);
+  const nextPoint = getNextPointByIdx(idx, pointList);
+  return arePointsAligned(previousPoint, currentPoint, nextPoint);
 }
 
 /**
@@ -371,4 +418,6 @@ module.exports = {
   getGridPointType,
   isBouncePointByIdx,
   doesSegmentCoverTile,
+  arePointsAligned,
+  isInterfacePointByIdx,
 };

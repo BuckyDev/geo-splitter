@@ -40,9 +40,10 @@ function extractCoordLists(featureList) {
  * Returns a new feature that is a merge of a list of features
  */
 function mergeFeatures(featureList, gridSize) {
+  const firstFeature = featureList[0];
   // No need to do the merge process if only one tile contains the whole feature
   if (featureList.length === 1) {
-    return featureList[0];
+    return firstFeature;
   }
   const coordList = extractCoordLists(featureList);
   const innerPoints = getInnerPoints(coordList, gridSize);
@@ -55,29 +56,35 @@ function mergeFeatures(featureList, gridSize) {
   const segments = sanitizedCoordList
     .map((coordArray) => getSegments(coordArray, innerPoints, gridSize))
     .flat();
+  console.log(segments);
 
-  const assembledFeature = assembleSegments(segments);
-  return assembledFeature;
+  const assembledSegments = assembleSegments(segments, gridSize);
+  return {
+    type: "Feature",
+    properties: firstFeature.properties,
+    geometry: {
+      type: "Polygon",
+      coordinates: [assembledSegments],
+    },
+  };
 }
 
+/**
+ * @param {*} tiles
+ * @param {number} gridSize
+ * @returns FeatureCollection
+ * Returns a feature collection that contains all merged features
+ */
 function mergeTiles(tiles, gridSize) {
-  console.log(tiles[0]);
   const groupedFeatures = groupFeatures(tiles);
-  const mergedFeatures = Object.keys(groupedFeatures)
+  const mergedFeatures = Object.values(groupedFeatures)
     .slice(0, 2) //TODO: make this work for all polygons in the bench test
-    .map((key) => {
-      const firstFeature = groupedFeatures[key];
-      return {
-        type: "Feature",
-        properties: firstFeature.properties,
-        geometry: {
-          type: "Polygon",
-          coordinates: [mergeFeatures(groupedFeatures[key], gridSize)],
-        },
-      };
-    });
+    .map((featureList) => mergeFeatures(featureList, gridSize));
 
-  return tiles;
+  return {
+    type: "FeatureCollection",
+    features: mergedFeatures,
+  };
 }
 
 module.exports = {

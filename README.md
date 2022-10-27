@@ -76,9 +76,28 @@ To know if a point is a grid point you therefore must know:
 - The coordinates of gridlines (if the splitting grid is orthonormal, the grid size would be enough)
 - The coordinates of the point
 
+#### Interface point
+
+A point of a path which:
+
+- is a grid point (i.e is on a gridline )
+- previous and following points are strictly on different sides of that gridline.
+
+To know if a point is an interface point you therefore must know:
+
+- The coordinates of gridlines (if the splitting grid is orthonormal, the grid size would be enough)
+- The coordinates of the point
+- The coordinates of the previous point
+- The coordinates of the following point
+
+By definition, all interface points are grid points
+
 #### Split point
 
-A point of a path which is on a gridline and where previous and following points are on different sides of that gridline.
+A point of a path which:
+
+- is an interface point (i.e is on a gridline with previous and next points on different sides of the line)
+- is on the line that links previous and following point
 
 To know if a point is a split point you therefore must know:
 
@@ -87,7 +106,7 @@ To know if a point is a split point you therefore must know:
 - The coordinates of the previous point
 - The coordinates of the following point
 
-By definition, all split points are grid points
+By definition, all split points are interface points
 
 #### Bounce point
 

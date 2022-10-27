@@ -1,4 +1,5 @@
 const { GRID_POINT_TYPES } = require("../constants/gridPointTypes");
+const { areOnSameSide } = require("../pointUtils");
 const {
   getGridPointType,
   getNextPointByIdx,
@@ -83,7 +84,11 @@ function getSegments(coordArray, innerPoints, gridSize) {
     // Add point to the last existing segment
     else if (
       hasOpenedSegment &&
-      !isGridPoint(point, gridSize) &&
+      // Should not be a grid point because we should close the segment
+      (!isGridPoint(point, gridSize) ||
+        // Unless it is a bounce point
+        isBouncePointByIdx(idx, rotatedArray, gridSize)) &&
+      // Or next point is also a grid point on the same gridline (adjacent segments)
       !isPointInList(point, innerPoints)
     ) {
       segments[segments.length - 1].push(point);

@@ -1,4 +1,8 @@
-const { arePointsEqual } = require("../utils");
+const {
+  arePointsEqual,
+  isSplitPointByIdx,
+  arePointsAligned,
+} = require("../utils");
 
 function concatSegmentByIdx({ resultArray, segments, idx, shouldInvert }) {
   const matchingSegment = [...segments[idx]];
@@ -15,7 +19,7 @@ function concatSegmentByIdx({ resultArray, segments, idx, shouldInvert }) {
  * @param {*} originalSegments
  * Returns a new feature that is a built of all segments
  */
-function assembleSegments(originalSegments) {
+function assembleSegments(originalSegments, gridSize) {
   const segments = [...originalSegments];
   let result = segments[0];
 
@@ -48,7 +52,9 @@ function assembleSegments(originalSegments) {
     // Redefine the last point
     lastPoint = result[result.length - 1];
   }
-  return result;
+  return result.filter(
+    (_point, idx) => !isSplitPointByIdx(idx, result, gridSize)
+  );
 }
 
 module.exports = assembleSegments;
