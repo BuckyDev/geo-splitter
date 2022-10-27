@@ -1,5 +1,4 @@
 const { GRID_POINT_TYPES } = require("../constants/gridPointTypes");
-const { areOnSameSide } = require("../pointUtils");
 const {
   getGridPointType,
   getNextPointByIdx,
