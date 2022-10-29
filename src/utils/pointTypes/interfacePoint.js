@@ -1,5 +1,11 @@
 const { GRID_POINT_TYPES } = require("../../constants/gridPointTypes");
 const {
+  haveDifferentXCoord,
+  haveDifferentYCoord,
+  areOnDifferentVerticalTiles,
+  areOnDifferentHorizontalTiles,
+} = require("../pointArrangement/comparePoints");
+const {
   getPreviousPointByIdx,
   getNextPointByIdx,
 } = require("../pointArrangement/getPointFromList");
@@ -11,6 +17,7 @@ const { getGridPointType } = require("./gridPoint");
  * @param {*} gridSize
  * @returns boolean
  * Returns whether the point pointList[idx] is an interface point (see interface point definition in README)
+ * WARNING: This util is meant to run on assembled polygons, it would not work on a split polygon to know which point to assemble for
  */
 function isInterfacePointByIdx(idx, pointList, gridSize) {
   const gridPointType = getGridPointType(pointList[idx], gridSize);
@@ -26,28 +33,20 @@ function isInterfacePointByIdx(idx, pointList, gridSize) {
   switch (gridPointType) {
     case GRID_POINT_TYPES.VERTICAL:
       return (
-        previousPoint[0] !== currentPoint[0] &&
-        nextPoint[0] !== currentPoint[0] &&
-        Math.floor(previousPoint[0] / gridSize) !==
-          Math.floor(nextPoint[0] / gridSize)
+        haveDifferentXCoord(currentPoint, [previousPoint, nextPoint]) &&
+        areOnDifferentVerticalTiles(previousPoint, nextPoint, gridSize)
       );
     case GRID_POINT_TYPES.HORIZONTAL:
       return (
-        previousPoint[1] !== currentPoint[1] &&
-        nextPoint[1] !== currentPoint[1] &&
-        Math.floor(previousPoint[1] / gridSize) !==
-          Math.floor(nextPoint[1] / gridSize)
+        haveDifferentYCoord(currentPoint, [previousPoint, nextPoint]) &&
+        areOnDifferentHorizontalTiles(previousPoint, nextPoint, gridSize)
       );
     case GRID_POINT_TYPES.BOTH:
       return (
-        (previousPoint[0] !== currentPoint[0] &&
-          previousPoint[1] !== currentPoint[1] &&
-          nextPoint[0] !== currentPoint[0] &&
-          nextPoint[1] !== currentPoint[1] &&
-          Math.floor(previousPoint[0] / gridSize) !==
-            Math.floor(nextPoint[0] / gridSize)) ||
-        Math.floor(previousPoint[1] / gridSize) !==
-          Math.floor(nextPoint[1] / gridSize)
+        (haveDifferentXCoord(currentPoint, [previousPoint, nextPoint]) &&
+          areOnDifferentVerticalTiles(previousPoint, nextPoint, gridSize)) ||
+        (haveDifferentYCoord(currentPoint, [previousPoint, nextPoint]) &&
+          areOnDifferentHorizontalTiles(previousPoint, nextPoint, gridSize))
       );
     default:
       return false;

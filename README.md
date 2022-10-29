@@ -110,7 +110,7 @@ By definition, all split points are interface points
 
 #### Bounce point
 
-A point of a path which is on a gridline and where previous and following points are not grid points and are on the same side of that gridline.
+A point of a path which is on a gridline and where previous and following points are not grid points and are strictly on the same side of that gridline.
 
 To know if a point is a bounce point you therefore must know:
 

@@ -3,6 +3,12 @@ const {
   getPreviousPointByIdx,
   getNextPointByIdx,
 } = require("../pointArrangement/getPointFromList");
+const {
+  haveDifferentXCoord,
+  haveDifferentYCoord,
+  areOnDifferentVerticalTiles,
+  areOnDifferentHorizontalTiles,
+} = require("../pointArrangement/comparePoints");
 const { getGridPointType } = require("./gridPoint");
 
 /**
@@ -26,28 +32,20 @@ function isBouncePointByIdx(idx, pointList, gridSize) {
   switch (gridPointType) {
     case GRID_POINT_TYPES.VERTICAL:
       return (
-        previousPoint[0] !== currentPoint[0] &&
-        nextPoint[0] !== currentPoint[0] &&
-        Math.floor(previousPoint[0] / gridSize) ===
-          Math.floor(nextPoint[0] / gridSize)
+        haveDifferentXCoord(currentPoint, [previousPoint, nextPoint]) &&
+        !areOnDifferentVerticalTiles(previousPoint, nextPoint, gridSize)
       );
     case GRID_POINT_TYPES.HORIZONTAL:
       return (
-        previousPoint[1] !== currentPoint[1] &&
-        nextPoint[1] !== currentPoint[1] &&
-        Math.floor(previousPoint[1] / gridSize) ===
-          Math.floor(nextPoint[1] / gridSize)
+        haveDifferentYCoord(currentPoint, [previousPoint, nextPoint]) &&
+        !areOnDifferentHorizontalTiles(previousPoint, nextPoint, gridSize)
       );
     case GRID_POINT_TYPES.BOTH:
       return (
-        previousPoint[0] !== currentPoint[0] &&
-        previousPoint[1] !== currentPoint[1] &&
-        nextPoint[0] !== currentPoint[0] &&
-        nextPoint[1] !== currentPoint[1] &&
-        Math.floor(previousPoint[0] / gridSize) ===
-          Math.floor(nextPoint[0] / gridSize) &&
-        Math.floor(previousPoint[1] / gridSize) ===
-          Math.floor(nextPoint[1] / gridSize)
+        haveDifferentXCoord(currentPoint, [previousPoint, nextPoint]) &&
+        haveDifferentYCoord(currentPoint, [previousPoint, nextPoint]) &&
+        !areOnDifferentVerticalTiles(previousPoint, nextPoint, gridSize) &&
+        !areOnDifferentHorizontalTiles(previousPoint, nextPoint, gridSize)
       );
     default:
       return false;
