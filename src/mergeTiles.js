@@ -1,7 +1,6 @@
 const assembleSegments = require("./mergeTiles/assembleSegments");
 const getInnerPoints = require("./mergeTiles/getInnerPoints");
-const getSegments = require("./mergeTiles/getSegments");
-const { doesSegmentCoverTile } = require("./utils");
+const { getAllSegments } = require("./mergeTiles/getSegments");
 
 /**
  * @param {*} tiles
@@ -48,17 +47,10 @@ function mergeFeatures(featureList, gridSize) {
   const coordList = extractCoordLists(featureList);
   const innerPoints = getInnerPoints(coordList, gridSize);
 
-  // Removes any inner tile, i.e segments which describe a polygon that cover the whole tile
-  const sanitizedCoordList = coordList.filter(
-    (coordArray) => !doesSegmentCoverTile(coordArray, gridSize)
-  );
-
-  const segments = sanitizedCoordList
-    .map((coordArray) => getSegments(coordArray, innerPoints, gridSize))
-    .flat();
-  console.log(segments);
+  const segments = getAllSegments(coordList, innerPoints, gridSize);
 
   const assembledSegments = assembleSegments(segments, gridSize);
+
   return {
     type: "Feature",
     properties: firstFeature.properties,

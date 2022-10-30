@@ -76,7 +76,7 @@ function roundedTo(x, n) {
   return Math.floor(x / n) * n;
 }
 
-function eqArr(arr1, arr2) {
+function areArraysEqual(arr1, arr2) {
   if (arr1.length !== arr2.length) {
     return false;
   }
@@ -84,7 +84,7 @@ function eqArr(arr1, arr2) {
 }
 
 function arePointsEqual(p1, p2) {
-  return eqArr(p1, p2);
+  return areArraysEqual(p1, p2);
 }
 
 function distance(p1, p2) {
@@ -92,7 +92,7 @@ function distance(p1, p2) {
 }
 
 function includeArr(arr, val) {
-  return !!arr.find((el) => eqArr(el, val));
+  return !!arr.find((el) => areArraysEqual(el, val));
 }
 
 function getSplitPoints(segment, gridSize) {
@@ -203,6 +203,7 @@ function doesSegmentCoverTile(segment, gridSize) {
 }
 
 module.exports = {
+  areArraysEqual,
   max,
   min,
   flattenDoubleArray,

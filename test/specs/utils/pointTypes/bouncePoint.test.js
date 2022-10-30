@@ -2,7 +2,7 @@ const { describe, expect, test } = require("@jest/globals");
 const {
   isBouncePointByIdx,
 } = require("../../../../src/utils/pointTypes/bouncePoint");
-const { GRID_SIZE } = require("../../../constants");
+const { GRID_SIZE } = require("../../../constants/grid");
 
 const VALID_BOUNCES_CONFIG = [
   // Horizontal grid point with surrounding points stricty on same side

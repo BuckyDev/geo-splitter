@@ -2,7 +2,7 @@ const { describe, expect, test } = require("@jest/globals");
 const {
   isInterfacePointByIdx,
 } = require("../../../../src/utils/pointTypes/interfacePoint");
-const { GRID_SIZE } = require("../../../constants");
+const { GRID_SIZE } = require("../../../constants/grid");
 
 const VALID_INTERFACES_CONFIG = [
   // Horizontal grid point with surrounding points stricty on different sides

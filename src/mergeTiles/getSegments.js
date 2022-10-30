@@ -1,5 +1,9 @@
 const { GRID_POINT_TYPES } = require("../constants/gridPointTypes");
-const { rotateArray, isPointInList } = require("../utils");
+const {
+  rotateArray,
+  isPointInList,
+  doesSegmentCoverTile,
+} = require("../utils");
 const {
   getNextPointByIdx,
 } = require("../utils/pointArrangement/getPointFromList");
@@ -110,4 +114,22 @@ function getSegments(coordArray, innerPoints, gridSize) {
   return segments;
 }
 
-module.exports = getSegments;
+/**
+ * @param {*} coordList an array of coord array, i.e an array of all the polygons to merge together
+ * @param {*} innerPoints
+ * @param {*} gridSize
+ * Creates a list of path that connect split points, eliminating inner points.
+ * Those segments should not connect split points that are immediately one after the other (those are borders).
+ */
+function getAllSegments(coordList, innerPoints, gridSize) {
+  // Removes any inner tile, i.e segments which describe a polygon that cover the whole tile
+  const sanitizedCoordList = coordList.filter(
+    (coordArray) => !doesSegmentCoverTile(coordArray, gridSize)
+  );
+
+  return sanitizedCoordList
+    .map((coordArray) => getSegments(coordArray, innerPoints, gridSize))
+    .flat();
+}
+
+module.exports = { getAllSegments };

@@ -7,7 +7,7 @@ const {
   isGridPoint,
   getGridPointType,
 } = require("../../../../src/utils/pointTypes/gridPoint");
-const { GRID_SIZE } = require("../../../constants");
+const { GRID_SIZE } = require("../../../constants/grid");
 
 describe("gridPoint", () => {
   describe("isGridPoint", () => {

@@ -2,7 +2,7 @@ const { describe, expect, test } = require("@jest/globals");
 const {
   isSplitPointByIdx,
 } = require("../../../../src/utils/pointTypes/splitPoint");
-const { GRID_SIZE } = require("../../../constants");
+const { GRID_SIZE } = require("../../../constants/grid");
 
 const VALID_SPLITS_CONFIG = [
   // Horizontal grid point with aligned surrounding points stricty on different sides

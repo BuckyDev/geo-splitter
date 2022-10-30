@@ -5,7 +5,7 @@ const {
   areOnDifferentVerticalTiles,
   areOnDifferentHorizontalTiles,
 } = require("../../../../src/utils/pointArrangement/comparePoints");
-const { GRID_SIZE } = require("../../../constants");
+const { GRID_SIZE } = require("../../../constants/grid");
 
 describe("comparePoints", () => {
   describe("haveDifferentXCoord", () => {
