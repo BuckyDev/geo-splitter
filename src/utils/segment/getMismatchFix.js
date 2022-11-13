@@ -1,21 +1,15 @@
 const { arePointsEqual, distance } = require("../../utils");
 
-type Matcher = {
-  segment: Segment;
-  properties: FeatureProperties;
-};
-
-// TODO: add tests
-function getMismatchFix(matcher1: Matcher, matcher2: Matcher): Mismatch {
-  const sharedPoint: Point = matcher1.segment.find(
+export function getMismatchFix(matcher1, matcher2) {
+  const sharedPoint = matcher1.segment.find(
     (point) =>
       arePointsEqual(point, matcher2.segment[0]) ||
       arePointsEqual(point, matcher2.segment[1])
   );
-  const mismatchPoint1: Point = matcher1.segment.find(
+  const mismatchPoint1 = matcher1.segment.find(
     (point) => !arePointsEqual(point, sharedPoint)
   );
-  const mismatchPoint2: Point = matcher2.segment.find(
+  const mismatchPoint2 = matcher2.segment.find(
     (point) => !arePointsEqual(point, sharedPoint)
   );
 

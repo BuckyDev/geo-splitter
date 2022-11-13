@@ -30,6 +30,11 @@ type Mismatch = {
   properties: FeatureProperties;
 };
 
+type Matcher = {
+  segment: Segment;
+  properties: FeatureProperties;
+};
+
 type BorderMismatch = {
   gridSegment: Border["gridSegment"];
   borders: Border["borders"];

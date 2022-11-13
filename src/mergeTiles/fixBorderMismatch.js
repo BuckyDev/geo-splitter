@@ -18,24 +18,21 @@ const {
  * @returns segment list
  * Returns an array of grid segments that can contains border between different split of a polygon
  */
-function getGridSegmentList(coordList: Path[], gridSize: number): Segment[] {
+function getGridSegmentList(coordList, gridSize) {
   const { xMin, xMax, yMin, yMax } = getGridCoordBoundary(coordList, gridSize);
 
-  const xCoords: number[] = genArray(xMin, xMax, gridSize);
-  const yCoords: number[] = genArray(yMin, yMax, gridSize);
+  const xCoords = genArray(xMin, xMax, gridSize);
+  const yCoords = genArray(yMin, yMax, gridSize);
 
   const verticalGridSegments =
     xCoords.length > 2
       ? xCoords
           .slice(1, -1)
           .map((x) =>
-            yCoords.slice(0, -1).map(
-              (y, yIdx) =>
-                [
-                  [x, y],
-                  [x, yCoords[yIdx + 1]],
-                ] as Segment
-            )
+            yCoords.slice(0, -1).map((y, yIdx) => [
+              [x, y],
+              [x, yCoords[yIdx + 1]],
+            ])
           )
           .flat()
       : [];
@@ -45,13 +42,10 @@ function getGridSegmentList(coordList: Path[], gridSize: number): Segment[] {
       ? yCoords
           .slice(1, -1)
           .map((y) =>
-            xCoords.slice(0, -1).map(
-              (x, xIdx) =>
-                [
-                  [x, y],
-                  [xCoords[xIdx + 1], y],
-                ] as Segment
-            )
+            xCoords.slice(0, -1).map((x, xIdx) => [
+              [x, y],
+              [xCoords[xIdx + 1], y],
+            ])
           )
           .flat()
       : [];
@@ -65,12 +59,8 @@ function getGridSegmentList(coordList: Path[], gridSize: number): Segment[] {
  * @param {*} gridSize
  * Creates a list of path that are on the gridSegment
  */
-function getBorderSegments(
-  coordArray: Path,
-  gridSegment: Segment,
-  gridSize: number
-): Segment[] {
-  const segments: Segment[] = [];
+function getBorderSegments(coordArray, gridSegment, gridSize) {
+  const segments = [];
 
   // Extract segments
   coordArray.forEach((point, idx) => {
@@ -93,11 +83,7 @@ function getBorderSegments(
  * @returns {Border}
  * Returns an array of borders between different split of a polygon
  */
-function getBorderList(
-  gridSegmentList: Segment[],
-  featureArray: Feature[],
-  gridSize: number
-): Border[] {
+function getBorderList(gridSegmentList, featureArray, gridSize) {
   return gridSegmentList
     .map((gridSegment) => {
       return {
@@ -125,9 +111,9 @@ function getBorderList(
  * Mismatches are borders from different polygons that have a shared point in different borders
  *
  */
-function getMismatch(border: Border): Mismatch[] {
+function getMismatch(border) {
   // Get the polygon idx with the highest number of border segments
-  let refPolygonIdx: number;
+  let refPolygonIdx;
   let maxBorderSegments = 0;
   border.borders.forEach(({ borderSegments }, idx) => {
     if (borderSegments.length > maxBorderSegments) {
@@ -177,7 +163,7 @@ function getMismatch(border: Border): Mismatch[] {
  * Mismatches are borders from different polygons that have a shared point in different borders
  *
  */
-function getBorderMismatch(borderList: Border[]): BorderMismatch[] {
+function getBorderMismatch(borderList) {
   return borderList.map((border) => {
     return {
       ...border,
@@ -192,7 +178,7 @@ function getBorderMismatch(borderList: Border[]): BorderMismatch[] {
  * @returns featureArray
  * Returns an array of features meant to be merged with no more border mismatch
  */
-function fixBorderMismatch(featureArray: Feature[], gridSize: number) {
+function fixBorderMismatch(featureArray, gridSize) {
   // Get gridlines to check for
   const coordList = featureArray
     .map((feature) => feature.geometry.coordinates)

@@ -1,6 +1,7 @@
 const assembleSegments = require("./mergeTiles/assembleSegments");
 const getInnerPoints = require("./mergeTiles/getInnerPoints");
 const { getAllSegments } = require("./mergeTiles/getSegments");
+const { getMismatchFix } = require("./utils/segment/getMismatchFix");
 
 /**
  * @param {*} tiles
@@ -89,6 +90,25 @@ function mergeTiles(tiles, gridSize) {
   const mergedFeatures = mergeableFeatures.map((featureList) =>
     mergeFeatures(featureList, gridSize)
   );
+
+  // testing stuff
+  const mismatch = getMismatchFix(
+    {
+      segment: [
+        [70, 17],
+        [70, 12],
+      ],
+      properties: { id: "1", zone: "0_0", zone_id: 0 },
+    },
+    {
+      segment: [
+        [70, 17],
+        [70, 14],
+      ],
+      properties: { id: "2", zone: "0_0", zone_id: 0 },
+    }
+  );
+  console.log(mismatch);
 
   return {
     type: "FeatureCollection",
