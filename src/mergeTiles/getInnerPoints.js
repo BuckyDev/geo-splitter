@@ -1,4 +1,6 @@
-const getCoordBoundary = require("./getCoordBoundary");
+const {
+  getCoordBoundary,
+} = require("../utils/polygonArrangement/getCoordBoundary");
 const { genArray } = require("../utils");
 
 /**

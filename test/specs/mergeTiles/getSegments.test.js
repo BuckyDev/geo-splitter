@@ -10,11 +10,11 @@ const {
 
 const testedPolygonIds = [
   "0",
-  //"2",
+  //"2", // TODO: this polygon has a mismatch point and data must be preprocessed to add that mute point back
   //"3",
   //"4",
   //"5",
-  //"6",
+  "6", // General case of mismatch point
   //"7",
   //"8",
   //"9",

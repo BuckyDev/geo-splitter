@@ -4,7 +4,7 @@ Some utils to split a GeoJSON file only containing Polygon type features into a 
 
 V1.0.1 only contains a function adapted to split polygon data
 
-![Example](./Example.png)
+![Example](./docPictures/Example.png)
 
 ## Usage
 
@@ -120,3 +120,11 @@ To know if a point is a bounce point you therefore must know:
 - The coordinates of the following point
 
 By definition, all bounce points are grid points
+
+#### Mismatch point
+
+This point represents a mismatch at the border between two parts of a split polygon that could break a merge process if not identified.
+
+![Example](./docPictures/mismatchPointExample.png)
+
+For instance in this picture, the mismatch point is part of the green polyogn, but not the purple one. Therefore before extracting segments for the merge the point should be re-introduced or segments won't be able to be assembled

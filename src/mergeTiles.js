@@ -69,9 +69,26 @@ function mergeFeatures(featureList, gridSize) {
  */
 function mergeTiles(tiles, gridSize) {
   const groupedFeatures = groupFeatures(tiles);
-  const mergedFeatures = Object.values(groupedFeatures)
-    .slice(0, 2) //TODO: make this work for all polygons in the bench test
-    .map((featureList) => mergeFeatures(featureList, gridSize));
+
+  // TODO: make this work for all polygons in the bench test
+  const mergeableFeatures = [
+    "0",
+    "1",
+    //"2", // Has a mismatch point
+    //"3", // Has a mismatch point
+    //"4", // Unknown issue
+    "5",
+    //"6", // Has a mismatch point
+    "7",
+    //"8", // May be a problem on border closing the polygon on a grid line
+    "9",
+    //"10", // May be a problem on inner point detection
+    "11",
+    //"12", // May be a problem on border closing the polygon on a grid line
+  ].map((id) => groupedFeatures[id]);
+  const mergedFeatures = mergeableFeatures.map((featureList) =>
+    mergeFeatures(featureList, gridSize)
+  );
 
   return {
     type: "FeatureCollection",
