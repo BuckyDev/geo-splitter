@@ -1,5 +1,7 @@
 const assembleSegments = require("./mergeTiles/assembleSegments");
-const { fixBorderMismatch } = require("./mergeTiles/fixBorderMismatch");
+const {
+  getBorderMismatchSegments,
+} = require("./mergeTiles/getBorderMismatchSegments");
 const getInnerPoints = require("./mergeTiles/getInnerPoints");
 const { getAllSegments } = require("./mergeTiles/getSegments");
 
@@ -49,8 +51,16 @@ function mergeFeatures(featureList, gridSize) {
   const innerPoints = getInnerPoints(coordList, gridSize);
 
   const segments = getAllSegments(coordList, innerPoints, gridSize);
+  const borderMismatchSegments = getBorderMismatchSegments(
+    featureList,
+    gridSize
+  );
+  const fullSegmentList = segments.concat(borderMismatchSegments);
 
-  const assembledSegments = assembleSegments(segments, gridSize);
+  // LOG: Result of extra segments for mismatches
+  console.log({ segments, borderMismatchSegments, fullSegmentList });
+
+  const assembledSegments = assembleSegments(fullSegmentList, gridSize);
 
   return {
     type: "Feature",
@@ -73,27 +83,30 @@ function mergeTiles(tiles, gridSize) {
 
   // TODO: make this work for all polygons in the bench test, then remove
   const mergeableFeatures = [
-    "0",
+    // POLYGONS WORKING
+    //"0",
     //"1",
-    //"2", // Has a mismatch point
-    //"3", // Has a mismatch point
-    //"4", // Unknown issue
     //"5",
     //"6", // Has a mismatch point
     //"7",
-    //"8", // May be a problem on border closing the polygon on a grid line
     //"9",
-    //"10", // May be a problem on inner point detection
     //"11",
+    //
+    // POLYGONS WITH ISSUES
+    "2", // Has a mismatch point
+    //"3", // Has a mismatch point
+    //"4", // Unknown issue
+    //"8", // May be a problem on border closing the polygon on a grid line
+    //"10", // May be a problem on inner point detection
     //"12", // May be a problem on border closing the polygon on a grid line
   ].map((id) => groupedFeatures[id]);
 
-  const borderMismatchSanitizedFeatures = mergeableFeatures.map(
+  /*   const borderMismatchSanitizedFeatures = mergeableFeatures.map(
     (featureGroup) => fixBorderMismatch(featureGroup, gridSize)
   );
   console.log({ borderMismatchSanitizedFeatures, mergeableFeatures });
-
-  const mergedFeatures = borderMismatchSanitizedFeatures.map((featureList) =>
+ */
+  const mergedFeatures = mergeableFeatures.map((featureList) =>
     mergeFeatures(featureList, gridSize)
   );
 
