@@ -1,7 +1,11 @@
 const {
   getCoordBoundary,
 } = require("../utils/polygonArrangement/getCoordBoundary");
-const { genArray } = require("../utils");
+const { genArray, arePointsEqual } = require("../utils");
+const {
+  getNextPointByIdx,
+} = require("../utils/pointArrangement/getPointFromList");
+const { isGridPoint } = require("../utils/pointTypes/gridPoint");
 
 /**
  * @param {*} coordList
@@ -34,16 +38,25 @@ function getInnerPoints(coordList, gridSize) {
     });
   });
 
-  const stringifiedCoords = coordList.map((coords) => JSON.stringify(coords));
-
-  /* This is an approximation, there could be use cases where it doesn't work in bench tests 
-    but that would be very unlikely for real map conversion */
+  // TODO: test updated logic
   const innerPoints = potentialInnerPoints.filter((point) => {
     const stringPoint = JSON.stringify(point);
+
     return (
-      stringifiedCoords.filter((stringCoord) =>
-        stringCoord.includes(stringPoint)
-      ).length >= 4
+      coordList.filter((coords) => {
+        if (!JSON.stringify(coords).includes(stringPoint)) {
+          return false;
+        }
+        const pointIdx = coords.findIndex((coord) =>
+          arePointsEqual(coord, point)
+        );
+        const nextPoint = getNextPointByIdx(pointIdx, coords);
+        const prevPoint = getNextPointByIdx(pointIdx, coords);
+
+        return (
+          isGridPoint(nextPoint, gridSize) && isGridPoint(prevPoint, gridSize)
+        );
+      }).length >= 4
     );
   });
 

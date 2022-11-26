@@ -133,7 +133,6 @@ function getSegments(border) {
     (_, idx) => idx !== refPolygonIdx
   );
 
-  console.log({ border });
   const mismatchingSegments = [];
   // Get the segments to add for segment mismatch
   const mismatchList = refPolygon.borderSegments
@@ -157,7 +156,6 @@ function getSegments(border) {
             mismatchingSegments.push(targetSegment);
             const segment = getMismatchFixSegment(borderSegment, targetSegment);
 
-            console.log({ segment, borderSegment, targetSegment });
             return segment;
           })
         )
@@ -186,13 +184,6 @@ function getSegments(border) {
         areSegmentsEqual(compareSegment, borderSegment)
       ).length < 2
   );
-
-  console.log({
-    original: border.borders.map(({ borderSegments }) => borderSegments).flat(),
-    matchingBorderSegments,
-    singleBorderSegments,
-    mismatchList,
-  });
 
   return mismatchList.concat(singleBorderSegments);
 }

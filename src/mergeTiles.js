@@ -57,9 +57,6 @@ function mergeFeatures(featureList, gridSize) {
   );
   const fullSegmentList = segments.concat(borderMismatchSegments);
 
-  // LOG: Result of extra segments for mismatches
-  console.log({ segments, borderMismatchSegments, fullSegmentList });
-
   const assembledSegments = assembleSegments(fullSegmentList, gridSize);
 
   return {
@@ -81,27 +78,7 @@ function mergeFeatures(featureList, gridSize) {
 function mergeTiles(tiles, gridSize) {
   const groupedFeatures = groupFeatures(tiles);
 
-  // TODO: make this work for all polygons in the bench test, then remove
-  const mergeableFeatures = [
-    // POLYGONS WORKING
-    "0",
-    "1",
-    "5",
-    "7",
-    "9",
-    "11",
-    "2", // Has a mismatch point
-    "4", // Unknown issue
-    "12", // May be a problem on border closing the polygon on a grid line
-    "6", // Has a mismatch point
-    "3", // Has a mismatch point
-    "8", // May be a problem on border closing the polygon on a grid line
-    //
-    // POLYGONS WITH ISSUES
-    //"10", // May be a problem on inner point detection
-  ].map((id) => groupedFeatures[id]);
-
-  const mergedFeatures = mergeableFeatures.map((featureList) =>
+  const mergedFeatures = Object.values(groupedFeatures).map((featureList) =>
     mergeFeatures(featureList, gridSize)
   );
 

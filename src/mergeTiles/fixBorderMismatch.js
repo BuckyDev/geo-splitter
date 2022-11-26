@@ -263,7 +263,7 @@ function fixBorderMismatch(featureArray, gridSize) {
 
   // Get list of mismatching borders to process
   const mismatchList = getBorderMismatch(borderList);
-  console.log(mismatchList);
+
   // Apply the mismatch fixes into the original data and return it
   return applyBorderMismatch(featureArray, mismatchList);
 }

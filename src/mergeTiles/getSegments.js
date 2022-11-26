@@ -73,7 +73,7 @@ function getSegments(coordArray, innerPoints, gridSize) {
   // Make the array start with the first valid point
   const firstSplitPointIndex = getStartPoint(coordArray, innerPoints, gridSize);
   const rotatedArray = rotateArray(coordArray, firstSplitPointIndex);
-  console.log({ coordArray, rotatedArray });
+
   // Extract segments
   let hasOpenedSegment = false;
   rotatedArray.forEach((point, idx) => {
@@ -123,7 +123,6 @@ function getSegments(coordArray, innerPoints, gridSize) {
  * Those segments should not connect split points that are immediately one after the other (those are borders).
  */
 function getAllSegments(coordList, innerPoints, gridSize) {
-  console.log({ innerPoints });
   // Removes any inner tile, i.e segments which describe a polygon that cover the whole tile
   const sanitizedCoordList = coordList.filter(
     (coordArray) => !doesSegmentCoverTile(coordArray, gridSize)
