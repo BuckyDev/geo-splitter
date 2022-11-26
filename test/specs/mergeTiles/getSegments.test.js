@@ -1,5 +1,8 @@
 const { describe, expect, test } = require("@jest/globals");
-const { getAllSegments } = require("../../../src/mergeTiles/getSegments");
+const {
+  getAllSegments,
+  getStartPoint,
+} = require("../../../src/mergeTiles/getSegments");
 const {
   polygonsBenchTest,
 } = require("../../constants/benchTest/polygonsBenchTest");
@@ -28,7 +31,18 @@ expect.extend({
 });
 
 describe("getSegments", () => {
-  describe("getAllSegments bench tests", () => {
+  describe("getStartPoint", () => {
+    test("returns the right start point", () => {
+      const coordArray = [
+        [40, 10],
+        [46, 10],
+        [44, 8],
+        [40, 6],
+      ];
+      expect(getStartPoint(coordArray, [], GRID_SIZE)).toEqual(1);
+    });
+  });
+  xdescribe("getAllSegments bench tests", () => {
     function createTest(polygonId) {
       return test(`returns correct segments for polygon ${polygonId} with a gridSize of ${GRID_SIZE}`, () => {
         // Build segments

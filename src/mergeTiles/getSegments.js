@@ -5,6 +5,9 @@ const {
   doesSegmentCoverTile,
 } = require("../utils");
 const {
+  areTwinGridPoints,
+} = require("../utils/pointArrangement/areTwinGridPoints");
+const {
   getNextPointByIdx,
 } = require("../utils/pointArrangement/getPointFromList");
 const { isBouncePointByIdx } = require("../utils/pointTypes/bouncePoint");
@@ -39,10 +42,11 @@ function getStartPoint(coordArray, innerPoints, gridSize) {
 
     const nextPoint = getNextPointByIdx(idx, coordArray);
     const nextPointGridType = getGridPointType(nextPoint, gridSize);
+    console.log(pointGridType, nextPointGridType);
 
     const isValidNextPoint =
       (nextPointGridType === GRID_POINT_TYPES.NONE ||
-        nextPointGridType !== pointGridType) &&
+        !areTwinGridPoints(point, nextPoint, gridSize)) &&
       !isPointInList(nextPoint, innerPoints);
 
     return isValidNextPoint;
@@ -72,7 +76,7 @@ function getSegments(coordArray, innerPoints, gridSize) {
   // Make the array start with the first valid point
   const firstSplitPointIndex = getStartPoint(coordArray, innerPoints, gridSize);
   const rotatedArray = rotateArray(coordArray, firstSplitPointIndex);
-
+  console.log({ coordArray, rotatedArray });
   // Extract segments
   let hasOpenedSegment = false;
   rotatedArray.forEach((point, idx) => {
@@ -133,4 +137,4 @@ function getAllSegments(coordList, innerPoints, gridSize) {
     .flat();
 }
 
-module.exports = { getAllSegments };
+module.exports = { getAllSegments, getStartPoint };

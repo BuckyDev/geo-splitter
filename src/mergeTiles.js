@@ -93,19 +93,14 @@ function mergeTiles(tiles, gridSize) {
     //"11",
     //"2", // Has a mismatch point
     //"3", // Has a mismatch point
+    //"4", // Unknown issue
+    //"12", // May be a problem on border closing the polygon on a grid line
     //
     // POLYGONS WITH ISSUES
-    "4", // Unknown issue
-    //"8", // May be a problem on border closing the polygon on a grid line
+    "8", // May be a problem on border closing the polygon on a grid line
     //"10", // May be a problem on inner point detection
-    //"12", // May be a problem on border closing the polygon on a grid line
   ].map((id) => groupedFeatures[id]);
 
-  /*   const borderMismatchSanitizedFeatures = mergeableFeatures.map(
-    (featureGroup) => fixBorderMismatch(featureGroup, gridSize)
-  );
-  console.log({ borderMismatchSanitizedFeatures, mergeableFeatures });
- */
   const mergedFeatures = mergeableFeatures.map((featureList) =>
     mergeFeatures(featureList, gridSize)
   );
