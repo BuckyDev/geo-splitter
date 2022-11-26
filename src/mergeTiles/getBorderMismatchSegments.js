@@ -148,8 +148,10 @@ function getSegments(border) {
             if (!hasMismatch) {
               return undefined;
             }
+
             const segment = getMismatchFixSegment(borderSegment, targetSegment);
 
+            console.log({ segment, borderSegment, targetSegment });
             return segment;
           })
         )

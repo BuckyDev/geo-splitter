@@ -1,4 +1,4 @@
-const { arePointsEqual, distance } = require("../../utils");
+const { arePointsEqual } = require("../../utils");
 
 function getMismatchFixSegment(segment1, segment2) {
   const sharedPoint = segment1.find(
@@ -12,14 +12,7 @@ function getMismatchFixSegment(segment1, segment2) {
     (point) => !arePointsEqual(point, sharedPoint)
   );
 
-  const mismatchPoint1Distance = distance(sharedPoint, mismatchPoint1);
-  const mismatchPoint2Distance = distance(sharedPoint, mismatchPoint2);
-
-  if (mismatchPoint1Distance > mismatchPoint2Distance) {
-    return [segment1[0], mismatchPoint2];
-  }
-
-  return [segment2[0], mismatchPoint1];
+  return [mismatchPoint1, mismatchPoint2];
 }
 
 module.exports = {

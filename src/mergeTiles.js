@@ -91,11 +91,11 @@ function mergeTiles(tiles, gridSize) {
     //"7",
     //"9",
     //"11",
+    //"2", // Has a mismatch point
+    //"3", // Has a mismatch point
     //
     // POLYGONS WITH ISSUES
-    "2", // Has a mismatch point
-    //"3", // Has a mismatch point
-    //"4", // Unknown issue
+    "4", // Unknown issue
     //"8", // May be a problem on border closing the polygon on a grid line
     //"10", // May be a problem on inner point detection
     //"12", // May be a problem on border closing the polygon on a grid line

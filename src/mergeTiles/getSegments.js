@@ -111,7 +111,7 @@ function getSegments(coordArray, innerPoints, gridSize) {
     }
   });
 
-  return segments;
+  return segments.filter((segment) => segment.length > 1);
 }
 
 /**
@@ -122,6 +122,7 @@ function getSegments(coordArray, innerPoints, gridSize) {
  * Those segments should not connect split points that are immediately one after the other (those are borders).
  */
 function getAllSegments(coordList, innerPoints, gridSize) {
+  console.log({ innerPoints });
   // Removes any inner tile, i.e segments which describe a polygon that cover the whole tile
   const sanitizedCoordList = coordList.filter(
     (coordArray) => !doesSegmentCoverTile(coordArray, gridSize)
