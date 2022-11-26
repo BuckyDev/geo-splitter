@@ -38,11 +38,8 @@ function getStartPoint(coordArray, innerPoints, gridSize) {
     }
 
     // Checks that next point is not inner point and either not a grid point or a different type of grid point
-    const pointGridType = getGridPointType(point, gridSize);
-
     const nextPoint = getNextPointByIdx(idx, coordArray);
     const nextPointGridType = getGridPointType(nextPoint, gridSize);
-    console.log(pointGridType, nextPointGridType);
 
     const isValidNextPoint =
       (nextPointGridType === GRID_POINT_TYPES.NONE ||

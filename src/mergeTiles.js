@@ -84,20 +84,20 @@ function mergeTiles(tiles, gridSize) {
   // TODO: make this work for all polygons in the bench test, then remove
   const mergeableFeatures = [
     // POLYGONS WORKING
-    //"0",
-    //"1",
-    //"5",
-    //"6", // Has a mismatch point
-    //"7",
-    //"9",
-    //"11",
-    //"2", // Has a mismatch point
-    //"3", // Has a mismatch point
-    //"4", // Unknown issue
-    //"12", // May be a problem on border closing the polygon on a grid line
+    "0",
+    "1",
+    "5",
+    "7",
+    "9",
+    "11",
+    "2", // Has a mismatch point
+    "4", // Unknown issue
+    "12", // May be a problem on border closing the polygon on a grid line
+    "6", // Has a mismatch point
+    "3", // Has a mismatch point
+    "8", // May be a problem on border closing the polygon on a grid line
     //
     // POLYGONS WITH ISSUES
-    "8", // May be a problem on border closing the polygon on a grid line
     //"10", // May be a problem on inner point detection
   ].map((id) => groupedFeatures[id]);
 

@@ -15,6 +15,7 @@ const {
 const {
   getGridCoordBoundary,
 } = require("../utils/polygonArrangement/getCoordBoundary");
+const { areSegmentsEqual } = require("../utils/segment/areSegmentsEqual");
 
 /**
  * @param {*} coordList
@@ -132,6 +133,9 @@ function getSegments(border) {
     (_, idx) => idx !== refPolygonIdx
   );
 
+  console.log({ border });
+  const mismatchingSegments = [];
+  // Get the segments to add for segment mismatch
   const mismatchList = refPolygon.borderSegments
     .map((borderSegment) => {
       return borderPolygons
@@ -149,6 +153,8 @@ function getSegments(border) {
               return undefined;
             }
 
+            mismatchingSegments.push(borderSegment);
+            mismatchingSegments.push(targetSegment);
             const segment = getMismatchFixSegment(borderSegment, targetSegment);
 
             console.log({ segment, borderSegment, targetSegment });
@@ -161,7 +167,34 @@ function getSegments(border) {
     .flat()
     .filter(Boolean);
 
-  return mismatchList;
+  // TODO: Add extra tests on this logic
+  // Get the extra segments for single border segment
+  const matchingBorderSegments = border.borders
+    .map(({ borderSegments }) => borderSegments)
+    .flat()
+    .filter(
+      // Filter out segments that are in the mismatchingSegments
+      (borderSegment) =>
+        !mismatchingSegments.some((mismatchSegment) =>
+          areSegmentsEqual(mismatchSegment, borderSegment)
+        )
+    );
+  const singleBorderSegments = matchingBorderSegments.filter(
+    // Filter out segments that are in double
+    (borderSegment) =>
+      matchingBorderSegments.filter((compareSegment) =>
+        areSegmentsEqual(compareSegment, borderSegment)
+      ).length < 2
+  );
+
+  console.log({
+    original: border.borders.map(({ borderSegments }) => borderSegments).flat(),
+    matchingBorderSegments,
+    singleBorderSegments,
+    mismatchList,
+  });
+
+  return mismatchList.concat(singleBorderSegments);
 }
 
 /**
