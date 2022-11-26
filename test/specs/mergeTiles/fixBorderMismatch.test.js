@@ -4,6 +4,7 @@ const {
   getGridSegmentList,
   getBorderSegments,
   getBorderList,
+  getBorderMismatch,
 } = require("../../../src/mergeTiles/fixBorderMismatch");
 const { groupedSample } = require("../../constants/benchTest/groupedSample");
 
@@ -448,8 +449,22 @@ describe("fixBorderMismatch", () => {
       ]);
     });
   });
-  describe("getBorderList", () => {
-    test("returns the correct border for a polygon within 2 horizontal tiles (polygon 6)", () => {
+  describe("getBorderMismatch", () => {
+    test("returns an empty borderMismatch for a polygon within 2 vertical tiles, and matching borders (polygon 5)", () => {
+      const borderList = getBorderList(
+        [
+          [
+            [30, 30],
+            [40, 30],
+          ],
+        ],
+        groupedSample[5],
+        GRID_SIZE
+      );
+      const borderMismatch = getBorderMismatch(borderList);
+      expect(borderMismatch.length).toBe(0);
+    });
+    test("returns a correct borderMismatch for a polygon within 2 horizontal tiles, and non matching borders (polygon 6)", () => {
       const borderList = getBorderList(
         [
           [
@@ -460,143 +475,48 @@ describe("fixBorderMismatch", () => {
         groupedSample[6],
         GRID_SIZE
       );
-      expect(borderList.length).toBeGreaterThan(0);
-      expect(borderList[0].borders).toEqual([
-        {
-          borderSegments: [
-            [
+      const borderMismatch = getBorderMismatch(borderList);
+      expect(borderMismatch.length).toBe(1);
+      expect(borderMismatch[0]).toEqual({
+        gridSegment: [
+          [70, 10],
+          [70, 20],
+        ],
+        borders: [
+          {
+            borderSegments: [
+              [
+                [70, 17],
+                [70, 11.8],
+              ],
+            ],
+            properties: { id: "6", zone: "60_10", zone_id: 0 },
+          },
+          {
+            borderSegments: [
+              [
+                [70, 11.8],
+                [70, 14],
+              ],
+            ],
+            properties: { id: "6", zone: "70_10", zone_id: 0 },
+          },
+        ],
+        mismatch: [
+          {
+            newPath: [
+              [70, 17],
+              [70, 14],
+              [70, 11.8],
+            ],
+            oldSegment: [
               [70, 17],
               [70, 11.8],
             ],
-          ],
-          properties: { id: "6", zone: "60_10", zone_id: 0 },
-        },
-        {
-          borderSegments: [
-            [
-              [70, 11.8],
-              [70, 14],
-            ],
-          ],
-          properties: { id: "6", zone: "70_10", zone_id: 0 },
-        },
-      ]);
-    });
-    test("returns the correct border for a polygon within 2 vertical tiles (polygon 12)", () => {
-      const borderList = getBorderList(
-        [
-          [
-            [40, 40],
-            [50, 40],
-          ],
+            properties: { id: "6", zone: "60_10", zone_id: 0 },
+          },
         ],
-        groupedSample[12],
-        GRID_SIZE
-      );
-      expect(borderList.length).toBeGreaterThan(0);
-      expect(borderList[0].borders).toEqual([
-        {
-          borderSegments: [
-            [
-              [46, 40],
-              [50, 40],
-            ],
-          ],
-          properties: { id: "12", zone: "40_30", zone_id: 0 },
-        },
-        {
-          borderSegments: [
-            [
-              [50, 40],
-              [46, 40],
-            ],
-          ],
-          properties: { id: "12", zone: "40_40", zone_id: 0 },
-        },
-      ]);
-    });
-    test("returns the correct double border for a polygon within 2 vertical tiles (polygon 9)", () => {
-      const borderList = getBorderList(
-        [
-          [
-            [20, 10],
-            [30, 10],
-          ],
-        ],
-        groupedSample[9],
-        GRID_SIZE
-      );
-      expect(borderList.length).toBeGreaterThan(0);
-      expect(borderList[0].borders).toEqual([
-        {
-          borderSegments: [
-            [
-              [25, 10],
-              [28, 10],
-            ],
-            [
-              [20, 10],
-              [23, 10],
-            ],
-          ],
-          properties: { id: "9", zone: "20_0", zone_id: 0 },
-        },
-        {
-          borderSegments: [
-            [
-              [28, 10],
-              [25, 10],
-            ],
-          ],
-          properties: { id: "9", zone: "20_10", zone_id: 0 },
-        },
-        {
-          borderSegments: [
-            [
-              [23, 10],
-              [20, 10],
-            ],
-          ],
-          properties: { id: "9", zone: "20_10", zone_id: 1 },
-        },
-      ]);
-    });
-    test("returns the correct borders for polygon 8 type", () => {
-      const borderList = getBorderList(
-        [
-          [
-            [40, 20],
-            [40, 30],
-          ],
-        ],
-        groupedSample[8],
-        GRID_SIZE
-      );
-      expect(borderList.length).toBeGreaterThan(0);
-      expect(borderList[0].borders).toEqual([
-        {
-          borderSegments: [
-            [
-              [40, 24.5],
-              [40, 22],
-            ],
-          ],
-          properties: { id: "8", zone: "30_20", zone_id: 0 },
-        },
-        {
-          borderSegments: [
-            [
-              [40, 26],
-              [40, 29],
-            ],
-            [
-              [40, 22],
-              [40, 24.5],
-            ],
-          ],
-          properties: { id: "8", zone: "40_20", zone_id: 0 },
-        },
-      ]);
+      });
     });
   });
 });

@@ -1,7 +1,7 @@
 const assembleSegments = require("./mergeTiles/assembleSegments");
+const { fixBorderMismatch } = require("./mergeTiles/fixBorderMismatch");
 const getInnerPoints = require("./mergeTiles/getInnerPoints");
 const { getAllSegments } = require("./mergeTiles/getSegments");
-const { getMismatchFix } = require("./utils/segment/getMismatchFix");
 
 /**
  * @param {*} tiles
@@ -71,44 +71,31 @@ function mergeFeatures(featureList, gridSize) {
 function mergeTiles(tiles, gridSize) {
   const groupedFeatures = groupFeatures(tiles);
 
-  // TODO: make this work for all polygons in the bench test
+  // TODO: make this work for all polygons in the bench test, then remove
   const mergeableFeatures = [
     "0",
-    "1",
+    //"1",
     //"2", // Has a mismatch point
     //"3", // Has a mismatch point
     //"4", // Unknown issue
-    "5",
+    //"5",
     //"6", // Has a mismatch point
-    "7",
+    //"7",
     //"8", // May be a problem on border closing the polygon on a grid line
-    "9",
+    //"9",
     //"10", // May be a problem on inner point detection
-    "11",
+    //"11",
     //"12", // May be a problem on border closing the polygon on a grid line
   ].map((id) => groupedFeatures[id]);
-  const mergedFeatures = mergeableFeatures.map((featureList) =>
+
+  const borderMismatchSanitizedFeatures = mergeableFeatures.map(
+    (featureGroup) => fixBorderMismatch(featureGroup, gridSize)
+  );
+  console.log({ borderMismatchSanitizedFeatures, mergeableFeatures });
+
+  const mergedFeatures = borderMismatchSanitizedFeatures.map((featureList) =>
     mergeFeatures(featureList, gridSize)
   );
-
-  // testing stuff
-  const mismatch = getMismatchFix(
-    {
-      segment: [
-        [70, 17],
-        [70, 12],
-      ],
-      properties: { id: "1", zone: "0_0", zone_id: 0 },
-    },
-    {
-      segment: [
-        [70, 17],
-        [70, 14],
-      ],
-      properties: { id: "2", zone: "0_0", zone_id: 0 },
-    }
-  );
-  console.log(mismatch);
 
   return {
     type: "FeatureCollection",

@@ -1,4 +1,4 @@
-const { genArray } = require("../utils");
+const { genArray, arePointsEqual } = require("../utils");
 const {
   getNextPointByIdx,
 } = require("../utils/pointArrangement/getPointFromList");
@@ -11,6 +11,7 @@ const {
 const {
   areSegmentsMismatching,
 } = require("../utils/segment/areSegmentsMismatching");
+const { getMismatchFix } = require("../utils/segment/getMismatchFix");
 
 /**
  * @param {*} coordList
@@ -121,18 +122,22 @@ function getMismatch(border) {
       refPolygonIdx = idx;
     }
   });
+  const refPolygon = border.borders[refPolygonIdx];
 
-  // Arrange the border inputs for checking
+  // Arrange the remaining border inputs for checking
   const borderPolygons = border.borders.filter(
     (_, idx) => idx !== refPolygonIdx
   );
-  const refPolygon = border.borders[refPolygonIdx];
 
   const mismatchList = refPolygon.borderSegments
     .map((borderSegment) => {
       return borderPolygons
         .map((borderPolygon) =>
           borderPolygon.borderSegments.map((targetSegment) => {
+            /* From here, we are checking if two different segments from the same border have a mismatch
+               If yes, we return a mismatch fix (object that has information on how to inject the fix in the original data)
+               If not, we filter that object
+            */
             const hasMismatch = areSegmentsMismatching(
               borderSegment,
               targetSegment
@@ -151,7 +156,8 @@ function getMismatch(border) {
         .filter(Boolean)
         .flat();
     })
-    .flat();
+    .flat()
+    .filter(Boolean);
 
   return mismatchList;
 }
@@ -164,12 +170,79 @@ function getMismatch(border) {
  *
  */
 function getBorderMismatch(borderList) {
-  return borderList.map((border) => {
-    return {
-      ...border,
-      mismatch: getMismatch(border),
-    };
+  return borderList
+    .map((border) => {
+      const mismatch = getMismatch(border);
+      if (!mismatch || !mismatch.length) {
+        return undefined;
+      }
+      return {
+        ...border,
+        mismatch,
+      };
+    })
+    .filter(Boolean);
+}
+
+/**
+ * @param {*} coordinates
+ * @param {*} mismatch
+ * @returns border mismatch list
+ * Returns an updated version of a polygon coordinates after applying a single mismatch
+ */
+// TODO: Add tests
+function injectMismatchOnCoordinates(coordinates, mismatch) {
+  return coordinates.map((path) => {
+    // Check if this path has the mismatch
+    const firstPointIndex = path.findIndex((point) =>
+      arePointsEqual(point, mismatch.oldSegment[0])
+    );
+    if (!firstPointIndex) {
+      return path;
+    }
+    path.splice(firstPointIndex + 1, 0, mismatch.newPath[1]);
+    return path;
   });
+}
+
+/**
+ * @param {*} featureArray
+ * @param {*} mismatchList
+ * @returns border mismatch list
+ * Returns an updated version of featureArray with all mismatch fixes applied
+ */
+// TODO: Add tests
+function applyBorderMismatch(featureArray, mismatchList) {
+  const featureArrayCopy = [...featureArray];
+
+  mismatchList.forEach((borderMismatch) => {
+    borderMismatch.mismatch.forEach((mismatch) => {
+      // Get the feature concerned by the mismatch
+      const mismatchingFeatureIdx = featureArrayCopy.findIndex(
+        (feature) =>
+          JSON.stringify(feature.properties) ===
+          JSON.stringify(mismatch.properties)
+      );
+      let mismatchingFeature = featureArrayCopy[mismatchingFeatureIdx];
+
+      // Inject the mismatch fix
+      mismatchingFeature = {
+        ...mismatchingFeature,
+        geometry: {
+          ...mismatchingFeature.geometry,
+          coordinates: injectMismatchOnCoordinates(
+            mismatchingFeature.geometry.coordinates,
+            mismatch
+          ),
+        },
+      };
+
+      // Replace the feature with the updated version with mismatch applied
+      featureArrayCopy.splice(mismatchingFeatureIdx, 1, mismatchingFeature);
+    });
+  });
+
+  return featureArrayCopy;
 }
 
 /**
@@ -190,6 +263,9 @@ function fixBorderMismatch(featureArray, gridSize) {
 
   // Get list of mismatching borders to process
   const mismatchList = getBorderMismatch(borderList);
+  console.log(mismatchList);
+  // Apply the mismatch fixes into the original data and return it
+  return applyBorderMismatch(featureArray, mismatchList);
 }
 
 module.exports = {
@@ -197,4 +273,5 @@ module.exports = {
   getBorderList,
   getGridSegmentList,
   getBorderSegments,
+  getBorderMismatch,
 };
