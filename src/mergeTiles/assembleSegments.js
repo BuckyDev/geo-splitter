@@ -49,9 +49,13 @@ function assembleSegments(originalSegments, gridSize) {
     // Redefine the last point
     lastPoint = result[result.length - 1];
   }
-  return result.filter(
-    (_point, idx) => !isSplitPointByIdx(idx, result, gridSize)
+  const straightPath = result.slice(0, -1);
+  const polygonPath = straightPath.filter(
+    (_point, idx) => !isSplitPointByIdx(idx, straightPath, gridSize)
   );
+  const finalPolygonPath = [...polygonPath, polygonPath[0]];
+
+  return finalPolygonPath;
 }
 
 module.exports = assembleSegments;
