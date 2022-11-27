@@ -10,6 +10,9 @@ const {
 const {
   getNextPointByIdx,
 } = require("../utils/pointArrangement/getPointFromList");
+const {
+  isPointOnGridSegment,
+} = require("../utils/pointArrangement/isPointOnGridSegment");
 const { isBouncePointByIdx } = require("../utils/pointTypes/bouncePoint");
 
 const {
@@ -28,7 +31,7 @@ const {
     - isn't immediately followed by an inner point
     Otherwise it means that this segment is a split border that shouldn't be included in the segment list
  */
-function getStartPoint(coordArray, innerPoints, gridSize) {
+function getStartPoint(coordArray, innerPoints, gridSegmentsList, gridSize) {
   const resultIndex = coordArray.findIndex((point, idx) => {
     // Checks that point is a grid point, and not inner point
     const isValidGridPoint =
@@ -43,7 +46,11 @@ function getStartPoint(coordArray, innerPoints, gridSize) {
 
     const isValidNextPoint =
       (nextPointGridType === GRID_POINT_TYPES.NONE ||
-        !areTwinGridPoints(point, nextPoint, gridSize)) &&
+        !areTwinGridPoints(point, nextPoint, gridSize) ||
+        // Or a point on an edge grid line
+        !gridSegmentsList.some((gridSegment) =>
+          isPointOnGridSegment(nextPoint, gridSegment, gridSize)
+        )) && // TODO: Test this
       !isPointInList(nextPoint, innerPoints);
 
     return isValidNextPoint;
@@ -67,13 +74,24 @@ function getStartPoint(coordArray, innerPoints, gridSize) {
  * Creates a list of path that connect split points, eliminating inner points.
  * Those segments should not connect split points that are immediately one after the other (those are borders).
  */
-function getSegments(coordArray, innerPoints, gridSize) {
+function getSegments(coordArray, innerPoints, gridSegmentsList, gridSize) {
   const segments = [];
 
   // Make the array start with the first valid point
-  const firstSplitPointIndex = getStartPoint(coordArray, innerPoints, gridSize);
+  const firstSplitPointIndex = getStartPoint(
+    coordArray,
+    innerPoints,
+    gridSegmentsList,
+    gridSize
+  );
   const rotatedArray = rotateArray(coordArray, firstSplitPointIndex);
-
+  console.log({
+    coordArray,
+    innerPoints,
+    gridSegmentsList,
+    gridSize,
+    rotatedArray,
+  });
   // Extract segments
   let hasOpenedSegment = false;
   rotatedArray.forEach((point, idx) => {
@@ -93,7 +111,11 @@ function getSegments(coordArray, innerPoints, gridSize) {
       // Should not be a grid point because we should close the segment
       (!isGridPoint(point, gridSize) ||
         // Unless it is a bounce point
-        isBouncePointByIdx(idx, rotatedArray, gridSize)) &&
+        isBouncePointByIdx(idx, rotatedArray, gridSize) ||
+        // Or a point on an edge grid line
+        !gridSegmentsList.some(
+          (gridSegment) => isPointOnGridSegment(point, gridSegment, gridSize) // TODO: Test this
+        )) &&
       // Or next point is also a grid point on the same gridline (adjacent segments)
       !isPointInList(point, innerPoints)
     ) {
@@ -122,14 +144,21 @@ function getSegments(coordArray, innerPoints, gridSize) {
  * Creates a list of path that connect split points, eliminating inner points.
  * Those segments should not connect split points that are immediately one after the other (those are borders).
  */
-function getAllSegments(coordList, innerPoints, gridSize) {
+function getAllSegments(coordList, innerPoints, gridSegmentsList, gridSize) {
   // Removes any inner tile, i.e segments which describe a polygon that cover the whole tile
-  const sanitizedCoordList = coordList.filter(
-    (coordArray) => !doesSegmentCoverTile(coordArray, gridSize)
-  );
+  const sanitizedCoordList = coordList.filter((coordArray) => {
+    // Keep the tile if the polygon does not cover the tile
+    if (!doesSegmentCoverTile(coordArray, gridSize)) {
+      return true;
+    }
+    // Keep the tile if any point is not an inner point
+    return coordArray.some((point) => !isPointInList(point, innerPoints)); // TODO: Test this
+  });
 
   return sanitizedCoordList
-    .map((coordArray) => getSegments(coordArray, innerPoints, gridSize))
+    .map((coordArray) =>
+      getSegments(coordArray, innerPoints, gridSegmentsList, gridSize)
+    )
     .flat();
 }
 

@@ -1,9 +1,13 @@
 const assembleSegments = require("./mergeTiles/assembleSegments");
 const {
   getBorderMismatchSegments,
+  getGridSegmentList,
 } = require("./mergeTiles/getBorderMismatchSegments");
 const getInnerPoints = require("./mergeTiles/getInnerPoints");
 const { getAllSegments } = require("./mergeTiles/getSegments");
+const {
+  isPointOnGridSegment,
+} = require("./utils/pointArrangement/isPointOnGridSegment");
 
 /**
  * @param {*} tiles
@@ -43,30 +47,81 @@ function extractCoordLists(featureList) {
  */
 function mergeFeatures(featureList, gridSize) {
   const firstFeature = featureList[0];
-  // No need to do the merge process if only one tile contains the whole feature
-  if (featureList.length === 1) {
-    return firstFeature;
+  /** No need to do the merge process if:
+   *  - there is only one feature
+   *  - or all features are in the same tile
+   */
+  if (
+    featureList.length === 1 ||
+    // TODO: Test this
+    featureList.filter(
+      (feature) => feature.properties.zone !== featureList[0].properties.zone
+    ).length === 0
+  ) {
+    return featureList;
   }
-  const coordList = extractCoordLists(featureList);
-  const innerPoints = getInnerPoints(coordList, gridSize);
 
-  const segments = getAllSegments(coordList, innerPoints, gridSize);
+  // Computes the gridSegments that the merge will happen on
+  const coordList = extractCoordLists(featureList);
+  const gridSegmentsList = getGridSegmentList(coordList, gridSize);
+
+  /** Extract any feature that won't be merged to any other polygons
+   */
+
+  const nonMergeableFeatureList = [];
+  const mergeableFeatureList = [];
+
+  // TODO: Test this
+  featureList.forEach((feature) => {
+    const coordArray = feature.geometry.coordinates[0];
+    // Features that don't have any point that is on a gridSegment
+    const isNotOnAnyGridSegment = !gridSegmentsList.some((gridSegment) =>
+      coordArray.some((point) =>
+        isPointOnGridSegment(point, gridSegment, gridSize)
+      )
+    );
+    if (isNotOnAnyGridSegment) {
+      nonMergeableFeatureList.push(feature);
+    } else {
+      mergeableFeatureList.push(feature);
+    }
+  });
+
+  /** Merge polygons
+   */
+  const mergeableCoordList = extractCoordLists(mergeableFeatureList);
+  const innerPoints = getInnerPoints(mergeableCoordList, gridSize);
+
+  const segments = getAllSegments(
+    mergeableCoordList,
+    innerPoints,
+    gridSegmentsList,
+    gridSize
+  );
   const borderMismatchSegments = getBorderMismatchSegments(
-    featureList,
+    mergeableFeatureList,
     gridSize
   );
   const fullSegmentList = segments.concat(borderMismatchSegments);
-
+  console.log({
+    fullSegmentList,
+    innerPoints,
+    nonMergeableFeatureList,
+    mergeableFeatureList,
+  });
   const assembledSegments = assembleSegments(fullSegmentList, gridSize);
 
-  return {
-    type: "Feature",
-    properties: firstFeature.properties,
-    geometry: {
-      type: "Polygon",
-      coordinates: [assembledSegments],
+  return [
+    ...nonMergeableFeatureList,
+    {
+      type: "Feature",
+      properties: firstFeature.properties,
+      geometry: {
+        type: "Polygon",
+        coordinates: [assembledSegments],
+      },
     },
-  };
+  ];
 }
 
 /**
@@ -78,9 +133,9 @@ function mergeFeatures(featureList, gridSize) {
 function mergeTiles(tiles, gridSize) {
   const groupedFeatures = groupFeatures(tiles);
 
-  const mergedFeatures = Object.values(groupedFeatures).map((featureList) =>
-    mergeFeatures(featureList, gridSize)
-  );
+  const mergedFeatures = Object.values(groupedFeatures)
+    .map((featureList) => mergeFeatures(featureList, gridSize))
+    .flat();
 
   return {
     type: "FeatureCollection",

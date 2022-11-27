@@ -17,9 +17,11 @@ function concatSegmentByIdx({ resultArray, segments, idx, shouldInvert }) {
  * Returns a new feature that is a built of all segments
  */
 function assembleSegments(originalSegments, gridSize) {
+  // Copy the segment array
   const segments = [...originalSegments];
-  let result = segments[0];
 
+  // Inits the data for iterations
+  let result = segments[0];
   let lastPoint = result[result.length - 1];
   segments.splice(0, 1);
 

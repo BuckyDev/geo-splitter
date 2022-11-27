@@ -42,7 +42,7 @@ describe("getSegments", () => {
       expect(getStartPoint(coordArray, [], GRID_SIZE)).toEqual(1);
     });
   });
-  xdescribe("getAllSegments bench tests", () => {
+  describe("getAllSegments bench tests", () => {
     function createTest(polygonId) {
       return test(`returns correct segments for polygon ${polygonId} with a gridSize of ${GRID_SIZE}`, () => {
         // Build segments

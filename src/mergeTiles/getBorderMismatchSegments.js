@@ -227,4 +227,5 @@ function getBorderMismatchSegments(featureList, gridSize) {
 
 module.exports = {
   getBorderMismatchSegments,
+  getGridSegmentList,
 };
