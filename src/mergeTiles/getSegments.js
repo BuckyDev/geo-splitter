@@ -20,6 +20,7 @@ const {
   getGridPointType,
   isGridPoint,
 } = require("../utils/pointTypes/gridPoint");
+const { areSegmentsEqual } = require("../utils/segment/areSegmentsEqual");
 
 /**
  * 
@@ -119,17 +120,14 @@ function shouldAddPointAndKeepSegmentOpen({
   // If point is on both border, leave the segment open if next point is not a border
   if (isBorderGridPoint && isBoundaryGridPoint) {
     const nextPoint = getNextPointByIdx(idx, rotatedArray);
-    const isBoundaryGridNextPoint = isPointOnGridSegmentList(
-      nextPoint,
-      boundaryGridSegmentsList,
-      gridSize
-    );
     const isBorderGridNextPoint = isPointOnGridSegmentList(
       nextPoint,
       gridSegmentsList,
       gridSize
     );
-    return !isBorderGridNextPoint || isBoundaryGridNextPoint;
+
+    // TODO: maybe there's an edge case here
+    return !isBorderGridNextPoint;
   }
 
   // Return false (shouldn't be reachable)
@@ -214,6 +212,38 @@ function getSegments(
 }
 
 /**
+ * @param {*} coordArray
+ * @param {*} innerPoints
+ * @param {*} gridSegmentsList
+ * @param {*} boundaryGridSegmentsList
+ * @param {*} gridSize
+ * Creates a list of path that connect split points, eliminating inner points.
+ * Those segments should not connect split points that are immediately one after the other (those are borders).
+ */
+function getSegmentsforCoveringTiles(
+  coordArray,
+  boundaryGridSegmentsList,
+  gridSize
+) {
+  // Return empty segments if no point is on boundary grid segments
+  const hasPointOnBoundary = coordArray.some((point) =>
+    isPointOnGridSegmentList(point, boundaryGridSegmentsList, gridSize)
+  );
+  if (!hasPointOnBoundary) {
+    return [];
+  }
+
+  return boundaryGridSegmentsList.filter((boundaryGridSegment) =>
+    coordArray.some((point, idx) =>
+      areSegmentsEqual(
+        [point, getNextPointByIdx(idx, coordArray)],
+        boundaryGridSegment
+      )
+    )
+  );
+}
+
+/**
  * @param {*} coordList an array of coord array, i.e an array of all the polygons to merge together
  * @param {*} innerPoints
  * @param {*} gridSegmentsList
@@ -230,16 +260,35 @@ function getAllSegments(
   gridSize
 ) {
   // Removes any inner tile, i.e segments which describe a polygon that cover the whole tile
+  const segmentsCoveringTile = [];
   const sanitizedCoordList = coordList.filter((coordArray) => {
     // Keep the tile if the polygon does not cover the tile
     if (!doesSegmentCoverTile(coordArray, gridSize)) {
       return true;
     }
+    const hasNonInnerPoint = coordArray.some(
+      (point) => !isPointInList(point, innerPoints)
+    ); // TODO: Test this
+    if (hasNonInnerPoint) {
+      segmentsCoveringTile.push(coordArray);
+    }
     // Keep the tile if any point is not an inner point
-    return coordArray.some((point) => !isPointInList(point, innerPoints)); // TODO: Test this
+    return false;
   });
 
-  return sanitizedCoordList
+  // Get segments for coordArray that cover the tile
+  const coveringTileSegments = segmentsCoveringTile
+    .map((coordArray) =>
+      getSegmentsforCoveringTiles(
+        coordArray,
+        boundaryGridSegmentsList,
+        gridSize
+      )
+    )
+    .flat();
+
+  // Get segments for the sanitized coord list
+  const mainTileSegments = sanitizedCoordList
     .map((coordArray) =>
       getSegments(
         coordArray,
@@ -250,6 +299,8 @@ function getAllSegments(
       )
     )
     .flat();
+
+  return [...coveringTileSegments, ...mainTileSegments];
 }
 
 module.exports = { getAllSegments, getStartPoint };
