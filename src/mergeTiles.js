@@ -3,11 +3,11 @@ const {
   getBorderMismatchSegments,
   getGridSegmentList,
 } = require("./mergeTiles/getBorderMismatchSegments");
+const {
+  getBoundaryGridSegmentList,
+} = require("./mergeTiles/getGridSegmentList");
 const getInnerPoints = require("./mergeTiles/getInnerPoints");
 const { getAllSegments } = require("./mergeTiles/getSegments");
-const {
-  isPointOnGridSegment,
-} = require("./utils/pointArrangement/isPointOnGridSegment");
 
 /**
  * @param {*} tiles
@@ -64,64 +64,47 @@ function mergeFeatures(featureList, gridSize) {
   // Computes the gridSegments that the merge will happen on
   const coordList = extractCoordLists(featureList);
   const gridSegmentsList = getGridSegmentList(coordList, gridSize);
-
-  /** Extract any feature that won't be merged to any other polygons
-   */
-
-  const nonMergeableFeatureList = [];
-  const mergeableFeatureList = [];
-
-  // TODO: Test this
-  featureList.forEach((feature) => {
-    const coordArray = feature.geometry.coordinates[0];
-    // Features that don't have any point that is on a gridSegment
-    const isNotOnAnyGridSegment = !gridSegmentsList.some((gridSegment) =>
-      coordArray.some((point) =>
-        isPointOnGridSegment(point, gridSegment, gridSize)
-      )
-    );
-    if (isNotOnAnyGridSegment) {
-      nonMergeableFeatureList.push(feature);
-    } else {
-      mergeableFeatureList.push(feature);
-    }
-  });
+  const boundaryGridSegmentsList = getBoundaryGridSegmentList(
+    coordList,
+    gridSize
+  );
 
   /** Merge polygons
    */
-  const mergeableCoordList = extractCoordLists(mergeableFeatureList);
+  const mergeableCoordList = extractCoordLists(featureList);
   const innerPoints = getInnerPoints(mergeableCoordList, gridSize);
 
   const segments = getAllSegments(
     mergeableCoordList,
     innerPoints,
     gridSegmentsList,
+    boundaryGridSegmentsList,
     gridSize
   );
   const borderMismatchSegments = getBorderMismatchSegments(
-    mergeableFeatureList,
+    featureList,
     gridSize
   );
   const fullSegmentList = segments.concat(borderMismatchSegments);
   console.log({
+    boundaryGridSegmentsList,
     fullSegmentList,
     innerPoints,
-    nonMergeableFeatureList,
-    mergeableFeatureList,
   });
   const assembledSegments = assembleSegments(fullSegmentList, gridSize);
 
-  return [
-    ...nonMergeableFeatureList,
-    {
-      type: "Feature",
-      properties: firstFeature.properties,
-      geometry: {
-        type: "Polygon",
-        coordinates: [assembledSegments],
-      },
+  return assembledSegments.map((polygonPath, idx) => ({
+    type: "Feature",
+    properties: {
+      id: firstFeature.properties.id,
+      zone: firstFeature.properties.zone, // TODO: change this to be the lowest zone
+      zone_id: idx,
     },
-  ];
+    geometry: {
+      type: "Polygon",
+      coordinates: [polygonPath],
+    },
+  }));
 }
 
 /**

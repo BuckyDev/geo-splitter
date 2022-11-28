@@ -12,6 +12,7 @@ const {
 } = require("../utils/pointArrangement/getPointFromList");
 const {
   isPointOnGridSegment,
+  isPointOnGridSegmentList,
 } = require("../utils/pointArrangement/isPointOnGridSegment");
 const { isBouncePointByIdx } = require("../utils/pointTypes/bouncePoint");
 
@@ -68,13 +69,89 @@ function getStartPoint(coordArray, innerPoints, gridSegmentsList, gridSize) {
 }
 
 /**
+ *
+ * @param {*}
+ *  TODO: Test this
+ */
+function shouldAddPointAndKeepSegmentOpen({
+  point,
+  idx,
+  gridSize,
+  rotatedArray,
+  gridSegmentsList,
+  boundaryGridSegmentsList,
+  innerPoints,
+}) {
+  // If point is not a grid point, keep it
+  if (!isGridPoint(point, gridSize)) {
+    return true;
+  }
+
+  // If point is an inner point, ignore it
+  if (isPointInList(point, innerPoints)) {
+    return false;
+  }
+
+  // ----- From here, we only have grid points that are not inner points
+
+  // If point is a bounce point, keep it
+  if (isBouncePointByIdx(idx, rotatedArray, gridSize)) {
+    return true;
+  }
+
+  const isBoundaryGridPoint = isPointOnGridSegmentList(
+    point,
+    boundaryGridSegmentsList,
+    gridSize
+  );
+  const isBorderGridPoint = isPointOnGridSegmentList(
+    point,
+    gridSegmentsList,
+    gridSize
+  );
+
+  // If point is on an internal border grid line only, keep it
+  if (!isBorderGridPoint && isBoundaryGridPoint) {
+    return true;
+  }
+
+  // TODO: Check this
+  // If point is on both border, leave the segment open if next point is not a border
+  if (isBorderGridPoint && isBoundaryGridPoint) {
+    const nextPoint = getNextPointByIdx(idx, rotatedArray);
+    const isBoundaryGridNextPoint = isPointOnGridSegmentList(
+      nextPoint,
+      boundaryGridSegmentsList,
+      gridSize
+    );
+    const isBorderGridNextPoint = isPointOnGridSegmentList(
+      nextPoint,
+      gridSegmentsList,
+      gridSize
+    );
+    return !isBorderGridNextPoint || isBoundaryGridNextPoint;
+  }
+
+  // Return false (shouldn't be reachable)
+  return false;
+}
+
+/**
  * @param {*} coordArray
  * @param {*} innerPoints
+ * @param {*} gridSegmentsList
+ * @param {*} boundaryGridSegmentsList
  * @param {*} gridSize
  * Creates a list of path that connect split points, eliminating inner points.
  * Those segments should not connect split points that are immediately one after the other (those are borders).
  */
-function getSegments(coordArray, innerPoints, gridSegmentsList, gridSize) {
+function getSegments(
+  coordArray,
+  innerPoints,
+  gridSegmentsList,
+  boundaryGridSegmentsList,
+  gridSize
+) {
   const segments = [];
 
   // Make the array start with the first valid point
@@ -89,7 +166,6 @@ function getSegments(coordArray, innerPoints, gridSegmentsList, gridSize) {
     coordArray,
     innerPoints,
     gridSegmentsList,
-    gridSize,
     rotatedArray,
   });
   // Extract segments
@@ -108,16 +184,16 @@ function getSegments(coordArray, innerPoints, gridSegmentsList, gridSize) {
     // Add point to the last existing segment
     else if (
       hasOpenedSegment &&
-      // Should not be a grid point because we should close the segment
-      (!isGridPoint(point, gridSize) ||
-        // Unless it is a bounce point
-        isBouncePointByIdx(idx, rotatedArray, gridSize) ||
-        // Or a point on an edge grid line
-        !gridSegmentsList.some(
-          (gridSegment) => isPointOnGridSegment(point, gridSegment, gridSize) // TODO: Test this
-        )) &&
-      // Or next point is also a grid point on the same gridline (adjacent segments)
-      !isPointInList(point, innerPoints)
+      shouldAddPointAndKeepSegmentOpen({
+        point,
+        idx,
+        gridSize,
+        rotatedArray,
+        gridSize,
+        gridSegmentsList,
+        boundaryGridSegmentsList,
+        innerPoints,
+      })
     ) {
       segments[segments.length - 1].push(point);
     }
@@ -140,11 +216,19 @@ function getSegments(coordArray, innerPoints, gridSegmentsList, gridSize) {
 /**
  * @param {*} coordList an array of coord array, i.e an array of all the polygons to merge together
  * @param {*} innerPoints
+ * @param {*} gridSegmentsList
+ * @param {*} boundaryGridSegmentsList
  * @param {*} gridSize
  * Creates a list of path that connect split points, eliminating inner points.
  * Those segments should not connect split points that are immediately one after the other (those are borders).
  */
-function getAllSegments(coordList, innerPoints, gridSegmentsList, gridSize) {
+function getAllSegments(
+  coordList,
+  innerPoints,
+  gridSegmentsList,
+  boundaryGridSegmentsList,
+  gridSize
+) {
   // Removes any inner tile, i.e segments which describe a polygon that cover the whole tile
   const sanitizedCoordList = coordList.filter((coordArray) => {
     // Keep the tile if the polygon does not cover the tile
@@ -157,7 +241,13 @@ function getAllSegments(coordList, innerPoints, gridSegmentsList, gridSize) {
 
   return sanitizedCoordList
     .map((coordArray) =>
-      getSegments(coordArray, innerPoints, gridSegmentsList, gridSize)
+      getSegments(
+        coordArray,
+        innerPoints,
+        gridSegmentsList,
+        boundaryGridSegmentsList,
+        gridSize
+      )
     )
     .flat();
 }

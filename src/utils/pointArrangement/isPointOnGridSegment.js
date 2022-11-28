@@ -29,6 +29,20 @@ function isPointOnGridSegment(point, gridSegment, gridSize) {
   );
 }
 
+/**
+ * @param {*} point
+ * @param {*} gridSegmentList
+ * @param {*} gridSize
+ * @returns boolean
+ * Returns whether the point is located on any grid segment of the list
+ */
+function isPointOnGridSegmentList(point, gridSegmentsList, gridSize) {
+  return gridSegmentsList.some(
+    (gridSegment) => isPointOnGridSegment(point, gridSegment, gridSize) // TODO: Test this
+  );
+}
+
 module.exports = {
   isPointOnGridSegment,
+  isPointOnGridSegmentList,
 };
