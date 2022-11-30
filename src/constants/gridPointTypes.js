@@ -1,0 +1,10 @@
+const GRID_POINT_TYPES = {
+  VERTICAL: "VERTICAL",
+  HORIZONTAL: "HORIZONTAL",
+  BOTH: "BOTH",
+  NONE: "NONE",
+};
+
+module.exports = {
+  GRID_POINT_TYPES,
+};
