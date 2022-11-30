@@ -37,7 +37,9 @@ function getStartPoint(coordArray, innerPoints, gridSegmentsList, gridSize) {
   const resultIndex = coordArray.findIndex((point, idx) => {
     // Checks that point is a grid point, and not inner point
     const isValidGridPoint =
-      isGridPoint(point, gridSize) && !isPointInList(point, innerPoints);
+      isGridPoint(point, gridSize) &&
+      isPointOnGridSegmentList(point, gridSegmentsList, gridSize) &&
+      !isPointInList(point, innerPoints);
     if (!isValidGridPoint) {
       return false;
     }
@@ -50,20 +52,15 @@ function getStartPoint(coordArray, innerPoints, gridSegmentsList, gridSize) {
       (nextPointGridType === GRID_POINT_TYPES.NONE ||
         !areTwinGridPoints(point, nextPoint, gridSize) ||
         // Or a point on an edge grid line
-        !gridSegmentsList.some((gridSegment) =>
-          isPointOnGridSegment(nextPoint, gridSegment, gridSize)
-        )) && // TODO: Test this
+        !isPointOnGridSegmentList(nextPoint, gridSegmentsList, gridSize)) && // TODO: Test this
       !isPointInList(nextPoint, innerPoints);
 
     return isValidNextPoint;
   });
 
   if (resultIndex === undefined || resultIndex === -1) {
-    throw new Error(
-      `getStartPoint: could not find a valid start point for coordArray ${JSON.stringify(
-        coordArray
-      )}`
-    );
+    // This case is hit when no point in the polygon is a grid point on internal border segment
+    return 0;
   }
 
   return resultIndex;

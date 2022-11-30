@@ -79,6 +79,7 @@ function assembleSegments(originalSegments, gridSize) {
     const polygonPath = assemblePolygon(segments, gridSize);
     result.push(polygonPath);
   }
+  console.log(result);
   return result;
 }
 
