@@ -12,10 +12,11 @@
   "rules": {
     "import/no-unresolved": [2, { "commonjs": true, "amd": true }],
     "import/named": [2, { "commonjs": true }],
+    "no-var": "error",
     "indent": [
       "error",
-      1,
-      { "SwitchCase": true, "offsetTernaryExpressions": true }
+      2,
+      { "SwitchCase": 2, "offsetTernaryExpressions": true }
     ],
     "linebreak-style": ["error", "unix"],
     "quotes": ["error", "double"],
