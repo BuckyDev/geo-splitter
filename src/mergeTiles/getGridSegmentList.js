@@ -1,3 +1,6 @@
+/* eslint-disable indent */
+/* has issues with ternary + member expression indent */
+
 // TODO: Test all
 
 const { genArray } = require("../utils/utils");

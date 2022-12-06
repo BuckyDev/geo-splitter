@@ -1,3 +1,5 @@
+/* eslint-disable indent */
+/* has issues with ternary + member expression indent */
 const { genArray, arePointsEqual } = require("../utils/utils");
 const {
   getNextPointByIdx,

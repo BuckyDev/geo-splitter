@@ -1,3 +1,6 @@
+/* eslint-disable indent */
+/* has issues with ternary + member expression indent */
+
 /* 
   This final method is a better alternative to the edge case or classic merger
   Is uses the property of corner point and virtual corner point which are known 
@@ -322,8 +325,7 @@ function buildPathOnVirtual(
   minY,
   maxY,
   pointSubset,
-  flattenedFeaturePoints,
-  featureId = null
+  flattenedFeaturePoints
 ) {
   //Setting up a start point to run the path builder
   const virtualPoints = [
@@ -399,8 +401,7 @@ function cornerPointMerger(
   maxY,
   pointSubset,
   cornerPointSubset,
-  featurePoints,
-  featureId = null
+  featurePoints
 ) {
   //Error copies
   const errorPointSubset = [...pointSubset];
@@ -434,10 +435,6 @@ function cornerPointMerger(
       );
       newSubset.push(newPath);
       securityIdx++;
-      // TODO: clean-up this
-      if (featureId === "112-E") {
-        debugger;
-      }
     }
     if (securityIdx === 1000) {
       console.error(
@@ -447,7 +444,7 @@ function cornerPointMerger(
         "merger",
         "infiniteWhileCorner",
         { minX, maxX, minY, maxY, errorPointSubset, errorCornerPointSubset },
-        { minX, minY, gridSize: Math.abs(maxX - minX), featureId }
+        { minX, minY, gridSize: Math.abs(maxX - minX) }
       );
     }
   }
@@ -491,8 +488,7 @@ function cornerPointMerger(
         minY,
         maxY,
         pointSubset,
-        flattenedFeaturePoints,
-        featureId
+        flattenedFeaturePoints
       );
       newSubset.push(
         fixBunk(minX, maxX, minY, maxY, newPath, flattenedFeaturePoints)
@@ -507,7 +503,7 @@ function cornerPointMerger(
         "merger",
         "infiniteWhileNoCorner",
         { minX, maxX, minY, maxY, errorPointSubset, errorCornerPointSubset },
-        { minX, minY, gridSize: Math.abs(maxX - minX), featureId }
+        { minX, minY, gridSize: Math.abs(maxX - minX) }
       );
     }
   }

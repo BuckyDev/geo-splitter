@@ -1,3 +1,6 @@
+/* eslint-disable indent */
+/* has issues with ternary + member expression indent */
+
 const {
   getMismatchFixSegment,
 } = require("../utils/segment/getMismatchFixSegment");
