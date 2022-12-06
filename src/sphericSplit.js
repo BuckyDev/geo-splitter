@@ -1,5 +1,5 @@
 const { genArray } = require("./utils");
-const { split } = require("./split");
+const { split } = require("./splitTiles/split");
 const { mergeTiles } = require("./mergeTiles");
 
 /**

@@ -1,6 +1,6 @@
-const { crossPointNb, getPolygonOuterPoint } = require("./pointUtils");
-const { C, RUN_STATE } = require("./consoleManager");
-const { genArray, includeArr, flattenDoubleArray } = require("./utils");
+const { crossPointNb, getPolygonOuterPoint } = require("../pointUtils");
+const { C, RUN_STATE } = require("../process/consoleManager");
+const { genArray, includeArr, flattenDoubleArray } = require("../utils");
 
 /**
  * @param {*} testPoint

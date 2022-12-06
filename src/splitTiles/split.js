@@ -11,18 +11,18 @@ const {
   isAdjacentEndExt,
   isOnSingleSide,
   setClockwiseRotation,
-} = require("./pointUtils");
+} = require("../pointUtils");
 const {
   genArray,
   mapFrom,
   includeArr,
   arePointsEqual,
   flattenDoubleArray,
-} = require("./utils");
+} = require("../utils");
 const { addSplitPointsAll } = require("./addSplitPoints");
 const { generateCornerPoints } = require("./generateCornerPoints");
-const { inputAnalysis } = require("./inputAnalysis");
-const { C, RUN_STATE } = require("./consoleManager");
+const { inputAnalysis } = require("../process/inputAnalysis");
+const { C, RUN_STATE } = require("../process/consoleManager");
 
 //Generate the subset for a square area
 function buildExcludedAdjacentPathCollection(

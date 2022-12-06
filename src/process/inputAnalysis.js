@@ -3,7 +3,7 @@
  * if the splitting process would fail or return with incorrect data
  */
 
-const { arePointsEqual } = require("./utils");
+const { arePointsEqual } = require("../utils");
 const { C, RUN_STATE } = require("./consoleManager");
 
 // Pitfalls detection

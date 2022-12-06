@@ -12,7 +12,7 @@ const {
   hasFollowingPoint,
   isOnSquareSide,
   fixBunk,
-} = require("./pointUtils");
+} = require("../pointUtils");
 
 const {
   includeArr,
@@ -21,9 +21,9 @@ const {
   arePointsEqual,
   substractPoints,
   flattenDoubleArray,
-} = require("./utils");
+} = require("../utils");
 
-const { C } = require("./consoleManager");
+const { C } = require("../process/consoleManager");
 
 /**
  * @param {*} minX
@@ -434,6 +434,7 @@ function cornerPointMerger(
       );
       newSubset.push(newPath);
       securityIdx++;
+      // TODO: clean-up this
       if (featureId === "112-E") {
         debugger;
       }
