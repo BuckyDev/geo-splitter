@@ -1,30 +1,28 @@
-var cornerPointMerger = require("./cornerPointMerger").cornerPointMerger;
-
-var isSimpleEntryPoint = require("./pointUtils").isSimpleEntryPoint;
-var isInSquare = require("./pointUtils").isInSquare;
-var isOnSquareSide = require("./pointUtils").isOnSquareSide;
-var isInnerCorner = require("./pointUtils").isInnerCorner;
-var isBouncePoint = require("./pointUtils").isBouncePoint;
-var isInCorner = require("./pointUtils").isInCorner;
-var areOnSameSide = require("./pointUtils").areOnSameSide;
-var isInjectedEntryPoint = require("./pointUtils").isInjectedEntryPoint;
-var isAdjacentEndExt = require("./pointUtils").isAdjacentEndExt;
-var isOnSingleSide = require("./pointUtils").isOnSingleSide;
-var setClockwiseRotation = require("./pointUtils").setClockwiseRotation;
-
-var genArray = require("./utils").genArray;
-var mapFrom = require("./utils").mapFrom;
-var includeArr = require("./utils").includeArr;
-var arePointsEqual = require("./utils").arePointsEqual;
-var flattenDoubleArray = require("./utils").flattenDoubleArray;
-
-var addSplitPointsAll = require("./addSplitPoints").addSplitPointsAll;
-var generateCornerPoints =
-  require("./generateCornerPoints").generateCornerPoints;
-var inputAnalysis = require("./inputAnalysis").inputAnalysis;
-
-var C = require("./consoleManager").C;
-var RUN_STATE = require("./consoleManager").RUN_STATE;
+const { cornerPointMerger } = require("./cornerPointMerger");
+const {
+  isSimpleEntryPoint,
+  isInSquare,
+  isOnSquareSide,
+  isInnerCorner,
+  isBouncePoint,
+  isInCorner,
+  areOnSameSide,
+  isInjectedEntryPoint,
+  isAdjacentEndExt,
+  isOnSingleSide,
+  setClockwiseRotation,
+} = require("./pointUtils");
+const {
+  genArray,
+  mapFrom,
+  includeArr,
+  arePointsEqual,
+  flattenDoubleArray,
+} = require("./utils");
+const { addSplitPointsAll } = require("./addSplitPoints");
+const { generateCornerPoints } = require("./generateCornerPoints");
+const { inputAnalysis } = require("./inputAnalysis");
+const { C, RUN_STATE } = require("./consoleManager");
 
 //Generate the subset for a square area
 function buildExcludedAdjacentPathCollection(

@@ -131,7 +131,7 @@ class ConsoleManager {
         console.log("");
         Object.keys(this.errors).map((func) => {
           this.errors[func].map((err) => {
-            console.log(`Error code :`);
+            console.log("Error code :");
             console.log(`${JSON.stringify({ function: func, ...err })}`);
             console.log("");
           });
