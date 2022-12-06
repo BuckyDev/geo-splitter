@@ -1,7 +1,7 @@
 const {
   getCoordBoundary,
 } = require("../utils/polygonArrangement/getCoordBoundary");
-const { genArray, arePointsEqual } = require("../utils");
+const { genArray, arePointsEqual } = require("../utils/utils");
 const {
   getNextPointByIdx,
 } = require("../utils/pointArrangement/getPointFromList");

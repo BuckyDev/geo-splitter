@@ -1,13 +1,11 @@
-const assembleSegments = require("./mergeTiles/assembleSegments");
+const assembleSegments = require("./assembleSegments");
 const {
   getBorderMismatchSegments,
   getGridSegmentList,
-} = require("./mergeTiles/getBorderMismatchSegments");
-const {
-  getBoundaryGridSegmentList,
-} = require("./mergeTiles/getGridSegmentList");
-const getInnerPoints = require("./mergeTiles/getInnerPoints");
-const { getAllSegments } = require("./mergeTiles/getSegments");
+} = require("./getBorderMismatchSegments");
+const { getBoundaryGridSegmentList } = require("./getGridSegmentList");
+const getInnerPoints = require("./getInnerPoints");
+const { getAllSegments } = require("./getSegments");
 
 /**
  * @param {*} tiles

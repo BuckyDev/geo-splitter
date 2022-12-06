@@ -1,4 +1,4 @@
-const { arePointsEqual } = require("../../utils");
+const { arePointsEqual } = require("../../utils/utils");
 
 function getMismatchFixSegment(segment1, segment2) {
   const sharedPoint = segment1.find(

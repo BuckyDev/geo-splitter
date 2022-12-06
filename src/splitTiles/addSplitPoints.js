@@ -1,15 +1,14 @@
+const { getSplitPoints, pushArray } = require("../utils/utils");
+const { C, RUN_STATE } = require("../process/consoleManager");
+
 /**
- * This function add points to the polygon set.
+ * @param {*} coordinates
+ * @param {*} gridSize
+ * @returns updated coordinates
+ *
+ * Updates the coordinates of a feature by adding split points to it.
  * Each time a line crosses a grid line, a new point is added.
  */
-
-var getSplitPoints = require("./utils").getSplitPoints;
-var pushArray = require("./utils").pushArray;
-
-var C = require("./consoleManager").C;
-var RUN_STATE = require("./consoleManager").RUN_STATE;
-
-//Add all missing crossborder points for a polygon
 function addSplitPointFeature(coordinates, gridSize) {
   const updatedCoordinates = [];
   coordinates.map((coordinate) => {
@@ -29,6 +28,13 @@ function addSplitPointFeature(coordinates, gridSize) {
   return updatedCoordinates;
 }
 
+/**
+ * @param {*} data
+ * @param {*} gridSize
+ * @returns updated data
+ *
+ * Add the split points for a FeatureCollection
+ */
 function addSplitPointsAll(data, gridSize) {
   C.splitPoints = RUN_STATE.RUNNING;
   return data.features.map((feature, idx) => {
@@ -37,6 +43,7 @@ function addSplitPointsAll(data, gridSize) {
       gridSize
     );
     C.updateRun(idx, data.features.length);
+
     return {
       ...feature,
       geometry: {

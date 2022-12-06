@@ -16,7 +16,10 @@
     "indent": [
       "error",
       2,
-      { "SwitchCase": 2, "offsetTernaryExpressions": true }
+      {
+        "offsetTernaryExpressions": true,
+        "SwitchCase": 1
+      }
     ],
     "linebreak-style": ["error", "unix"],
     "quotes": ["error", "double"],

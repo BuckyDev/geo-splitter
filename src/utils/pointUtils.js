@@ -1,10 +1,12 @@
-var min = require("./utils").min;
-var max = require("./utils").max;
-var findPointIndex = require("./utils").findPointIndex;
-var mapFrom = require("./utils").mapFrom;
-var arePointsEqual = require("./utils").arePointsEqual;
-var flattenDoubleArray = require("./utils").flattenDoubleArray;
-var distance = require("./utils").distance;
+const {
+  min,
+  max,
+  findPointIndex,
+  mapFrom,
+  arePointsEqual,
+  flattenDoubleArray,
+  distance,
+} = require("./utils");
 
 function isOnSquareSide(minX, maxX, minY, maxY, point) {
   const validCoordX = [minX, maxX];

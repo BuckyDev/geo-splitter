@@ -3,7 +3,7 @@ const {
   rotateArray,
   isPointInList,
   doesSegmentCoverTile,
-} = require("../utils");
+} = require("../utils/utils");
 const {
   areTwinGridPoints,
 } = require("../utils/pointArrangement/areTwinGridPoints");
@@ -11,7 +11,6 @@ const {
   getNextPointByIdx,
 } = require("../utils/pointArrangement/getPointFromList");
 const {
-  isPointOnGridSegment,
   isPointOnGridSegmentList,
 } = require("../utils/pointArrangement/isPointOnGridSegment");
 const { isBouncePointByIdx } = require("../utils/pointTypes/bouncePoint");
@@ -184,7 +183,6 @@ function getSegments(
         idx,
         gridSize,
         rotatedArray,
-        gridSize,
         gridSegmentsList,
         boundaryGridSegmentsList,
         innerPoints,

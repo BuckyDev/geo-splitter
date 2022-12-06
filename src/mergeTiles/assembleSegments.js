@@ -1,4 +1,4 @@
-const { arePointsEqual } = require("../utils");
+const { arePointsEqual } = require("../utils/utils");
 const { isSplitPointByIdx } = require("../utils/pointTypes/splitPoint");
 
 function concatSegmentByIdx({ resultArray, segments, idx, shouldInvert }) {

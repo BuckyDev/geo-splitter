@@ -1,4 +1,4 @@
-const { arePointsEqual } = require("../../utils");
+const { arePointsEqual } = require("../../utils/utils");
 
 function areSegmentsEqual(segment1, segment2) {
   return (

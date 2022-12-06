@@ -1,4 +1,6 @@
-const { mergeTiles } = require("../../../src/mergeTiles");
+const { describe, expect, test } = require("@jest/globals");
+
+const { mergeTiles } = require("../../../src/mergeTiles/mergeTiles");
 const { GRID_SIZE } = require("../../constants/grid");
 
 const sideEffectTiles = [
