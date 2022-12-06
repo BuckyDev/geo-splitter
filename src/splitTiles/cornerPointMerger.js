@@ -12,7 +12,7 @@ const {
   hasFollowingPoint,
   isOnSquareSide,
   fixBunk,
-} = require("../pointUtils");
+} = require("../utils/pointUtils");
 
 const {
   includeArr,
@@ -21,7 +21,7 @@ const {
   arePointsEqual,
   substractPoints,
   flattenDoubleArray,
-} = require("../utils");
+} = require("../utils/utils");
 
 const { C } = require("../process/consoleManager");
 

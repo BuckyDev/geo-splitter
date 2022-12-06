@@ -1,6 +1,6 @@
 // TODO: Test all
 
-const { genArray } = require("../utils");
+const { genArray } = require("../utils/utils");
 const {
   getGridCoordBoundary,
 } = require("../utils/polygonArrangement/getCoordBoundary");

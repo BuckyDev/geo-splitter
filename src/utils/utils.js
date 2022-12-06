@@ -1,5 +1,5 @@
-const { GRID_POINT_TYPES } = require("./constants/gridPointTypes");
-const { getGridPointType } = require("./utils/pointTypes/gridPoint");
+const { GRID_POINT_TYPES } = require("../constants/gridPointTypes");
+const { getGridPointType } = require("./pointTypes/gridPoint");
 
 function max(pointArray, coord) {
   let max;

@@ -5,7 +5,7 @@ const {
   split,
 } = require("./src/splitTiles/split");
 const { cornerPointMerger } = require("./src/splitTiles/cornerPointMerger");
-const { mergeTiles } = require("./src/mergeTiles");
+const { mergeTiles } = require("./src/mergeTiles/mergeTiles");
 const { sphericSplit, createSphericGrid } = require("./src/sphericSplit");
 
 module.exports = {

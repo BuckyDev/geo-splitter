@@ -5,7 +5,7 @@ const {
   areSegmentsMismatching,
 } = require("../utils/segment/areSegmentsMismatching");
 
-const { genArray } = require("../utils");
+const { genArray } = require("../utils/utils");
 const {
   getNextPointByIdx,
 } = require("../utils/pointArrangement/getPointFromList");

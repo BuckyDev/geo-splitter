@@ -1,4 +1,4 @@
-const { getSplitPoints, pushArray } = require("../utils");
+const { getSplitPoints, pushArray } = require("../utils/utils");
 const { C, RUN_STATE } = require("../process/consoleManager");
 
 /**

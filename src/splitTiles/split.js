@@ -11,14 +11,14 @@ const {
   isAdjacentEndExt,
   isOnSingleSide,
   setClockwiseRotation,
-} = require("../pointUtils");
+} = require("../utils/pointUtils");
 const {
   genArray,
   mapFrom,
   includeArr,
   arePointsEqual,
   flattenDoubleArray,
-} = require("../utils");
+} = require("../utils/utils");
 const { addSplitPointsAll } = require("./addSplitPoints");
 const { generateCornerPoints } = require("./generateCornerPoints");
 const { inputAnalysis } = require("../process/inputAnalysis");

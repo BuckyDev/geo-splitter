@@ -1,6 +1,6 @@
-const { genArray } = require("./utils");
+const { genArray } = require("./utils/utils");
 const { split } = require("./splitTiles/split");
-const { mergeTiles } = require("./mergeTiles");
+const { mergeTiles } = require("./mergeTiles/mergeTiles");
 
 /**
  * @param {} gridSize
