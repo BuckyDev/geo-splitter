@@ -1,4 +1,5 @@
 /**
+ * TESTED
  * @param {point} refPoint
  * @param {point array} pointList
  * @returns boolean
@@ -9,6 +10,7 @@ function haveDifferentXCoord(refPoint, pointList) {
 }
 
 /**
+ * TESTED
  * @param {point} refPoint
  * @param {point array} pointList
  * @returns boolean
@@ -19,6 +21,7 @@ function haveDifferentYCoord(refPoint, pointList) {
 }
 
 /**
+ * TESTED
  * @param {point} point1
  * @param {point} point2
  * @param {number} gridSize
@@ -30,6 +33,7 @@ function areOnDifferentVerticalTiles(point1, point2, gridSize) {
 }
 
 /**
+ * TESTED
  * @param {point} point1
  * @param {point} point2
  * @param {number} gridSize

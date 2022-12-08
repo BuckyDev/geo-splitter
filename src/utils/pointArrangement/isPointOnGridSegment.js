@@ -1,6 +1,7 @@
 const { isGridPoint } = require("../pointTypes/gridPoint");
 
 /**
+ * TESTED
  * @param {*} point
  * @param {*} gridSegment
  * @param {*} gridSize

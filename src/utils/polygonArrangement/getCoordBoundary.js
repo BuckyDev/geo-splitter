@@ -1,4 +1,5 @@
 /**
+ * TESTED
  * @param {*} coordList
  * Returns the minimum square area in which all the feature points are included
  */
@@ -16,6 +17,7 @@ function getCoordBoundary(coordList) {
 }
 
 /**
+ * TESTED
  * @param {*} coordList
  * @param {*} coordList
  * Returns the minimum square area in which all the feature points are included, rounded up to gridSize

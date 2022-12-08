@@ -215,7 +215,7 @@ function getSegments(
  * Creates a list of path that connect split points, eliminating inner points.
  * Those segments should not connect split points that are immediately one after the other (those are borders).
  */
-function getSegmentsforCoveringTiles(
+function getSegmentsForCoveringTiles(
   coordArray,
   boundaryGridSegmentsList,
   gridSize
@@ -274,7 +274,7 @@ function getAllSegments(
   // Get segments for coordArray that cover the tile
   const coveringTileSegments = segmentsCoveringTile
     .map((coordArray) =>
-      getSegmentsforCoveringTiles(
+      getSegmentsForCoveringTiles(
         coordArray,
         boundaryGridSegmentsList,
         gridSize

@@ -97,7 +97,7 @@ By definition, all interface points are grid points
 A point of a path which:
 
 - is an interface point (i.e is on a gridline with previous and next points on different sides of the line)
-- is on the line that links previous and following point
+- is on the line that links previous and following point (3 points are aligned and it's between both)
 
 To know if a point is a split point you therefore must know:
 
@@ -127,4 +127,4 @@ This point represents a mismatch at the border between two parts of a split poly
 
 ![Example](./docPictures/mismatchPointExample.png)
 
-For instance in this picture, the mismatch point is part of the green polyogn, but not the purple one. Therefore before extracting segments for the merge the point should be re-introduced or segments won't be able to be assembled
+For instance in this picture, the mismatch point is part of the green polyogn, but not the purple one. Therefore the point should be re-introduced as an extra segment or the segments extracted for the merge process won't be able to be assembled.
