@@ -1,6 +1,7 @@
 const { GRID_POINT_TYPES } = require("../../constants/gridPointTypes");
 
 /**
+ * TESTED
  * @param {*} point
  * @param {*} gridSize
  * @returns boolean
@@ -11,6 +12,7 @@ function isGridPoint(point, gridSize) {
 }
 
 /**
+ * TESTED
  * @param {*} point
  * @param {*} gridSize
  * @returns any of GRID_POINT_TYPES

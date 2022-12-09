@@ -1,4 +1,5 @@
 /**
+ * TESTED
  * @param {*} point1
  * @param {*} point2
  * @param {*} point3

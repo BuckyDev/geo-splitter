@@ -378,6 +378,7 @@ function buildAreaSplit(
 
 //Input formatting to ensure function will work.
 function formatInput(data) {
+  // Removes last point of the polygon so that we process paths and not loops
   data.features.map((feature) => {
     feature.geometry.coordinates.map((polygonCoord) => {
       if (
@@ -399,7 +400,7 @@ function split(
   gridSize,
   bypassAnalysis = false
 ) {
-  // Formats the input to match running conditions like aligned points
+  // Formats the input to match running conditions
   formatInput(data);
   C.logState();
 
@@ -454,6 +455,7 @@ function split(
     yEnd,
     gridSize
   );
+  console.log({ splittedData, intersectionPoints });
   C.merger = RUN_STATE.SUCCEEDED;
   C.logState();
 

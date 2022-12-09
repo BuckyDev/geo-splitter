@@ -12,6 +12,7 @@ const {
 const { getGridPointType } = require("./gridPoint");
 
 /**
+ * TESTED
  * @param {*} idx
  * @param {*} pointList
  * @param {*} gridSize

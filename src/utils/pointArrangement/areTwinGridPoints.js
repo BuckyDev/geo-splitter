@@ -2,13 +2,12 @@ const { GRID_POINT_TYPES } = require("../../constants/gridPointTypes");
 const { getGridPointType } = require("../pointTypes/gridPoint");
 
 /**
- *
+ * TESTED
  * @param {*} point1
  * @param {*} point2
  * @param {*} gridSize
  * @returns boolean
  * Returns true if the grid points share a gridline
- * TODO: Add tests
  */
 function areTwinGridPoints(point1, point2, gridSize) {
   const gridPointType1 = getGridPointType(point1, gridSize);

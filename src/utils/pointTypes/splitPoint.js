@@ -6,6 +6,7 @@ const {
 const { isInterfacePointByIdx } = require("./interfacePoint");
 
 /**
+ * TESTED
  * @param {*} idx
  * @param {*} pointList
  * @param {*} gridSize

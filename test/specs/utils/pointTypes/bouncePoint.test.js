@@ -90,15 +90,55 @@ const INVALID_BOUNCES_CONFIG = [
 
 describe("bouncePoint", () => {
   describe("isBouncePointByIdx", () => {
-    function createTest(array, expectedResult) {
+    function createTest(array, expectedResult, idx = 1) {
       return test(`returns ${expectedResult} for ${JSON.stringify(
         array
       )} with a gridSize of ${GRID_SIZE}`, () => {
-        expect(isBouncePointByIdx(1, array, GRID_SIZE)).toBe(expectedResult);
+        expect(isBouncePointByIdx(idx, array, GRID_SIZE)).toBe(expectedResult);
       });
     }
 
     VALID_BOUNCES_CONFIG.map((validArray) => createTest(validArray, true));
-    INVALID_BOUNCES_CONFIG.map((validArray) => createTest(validArray, false));
+    INVALID_BOUNCES_CONFIG.map((invalidArray) =>
+      createTest(invalidArray, false)
+    );
+
+    createTest(
+      [
+        [6, 10],
+        [7, 5],
+        [5, 5],
+      ],
+      true,
+      0
+    );
+    createTest(
+      [
+        [7, 5],
+        [5, 5],
+        [6, 10],
+      ],
+      true,
+      2
+    );
+
+    createTest(
+      [
+        [5, 7],
+        [8, 7],
+        [5, 5],
+      ],
+      false,
+      0
+    );
+    createTest(
+      [
+        [8, 7],
+        [5, 5],
+        [5, 7],
+      ],
+      false,
+      2
+    );
   });
 });
